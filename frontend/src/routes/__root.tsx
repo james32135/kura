@@ -1,10 +1,9 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute } from "@tanstack/react-router";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 
-import appCss from "../styles.css?url";
 import { CursorGlow } from "@/components/CursorGlow";
 import { Toaster } from "@/components/ui/sonner";
 import { wagmiConfig } from "@/config/wagmi";
@@ -43,49 +42,9 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "KURA — Encrypted Community Savings Circles" },
-      {
-        name: "description",
-        content:
-          "Save Together. Know Nothing. Encrypted savings circles powered by Fully Homomorphic Encryption. Every contribution private, every bid sealed, every credit score portable.",
-      },
-      { name: "author", content: "KURA Protocol" },
-      { property: "og:title", content: "KURA — Encrypted Community Savings Circles" },
-      {
-        property: "og:description",
-        content:
-          "Encrypted savings circles for 1.2 billion people. Powered by Fully Homomorphic Encryption.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-    ],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" className="dark">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   return (
