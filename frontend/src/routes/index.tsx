@@ -105,22 +105,22 @@ function Hero() {
           animate="visible"
           className="mt-8 font-display font-semibold text-5xl sm:text-6xl md:text-7xl lg:text-[88px] leading-[0.95] tracking-tight"
         >
-          <motion.span variants={staggerItem} className="block">
+          <motion.span variants={staggerItem} className="block text-white drop-shadow-[0_2px_24px_rgba(255,255,255,0.18)]">
             Save Together.
           </motion.span>
           <motion.span
             variants={staggerItem}
-            className="block text-gradient-accent drop-shadow-[0_4px_30px_oklch(0.78_0.13_200_/_0.55)]"
+            className="block text-gradient-accent drop-shadow-[0_4px_40px_oklch(0.78_0.13_200_/_0.7)]"
           >
             Know Nothing.
           </motion.span>
         </motion.h1>
 
         <Reveal delay={0.4}>
-          <p className="mt-7 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed">
+          <p className="mt-7 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed text-white/70">
             The first savings circle protocol where every contribution, bid, and credit score
-            is encrypted using Fully Homomorphic Encryption. Serving a{" "}
-            <span className="text-foreground">$500B+ informal savings market</span> used by
+            is encrypted using Fully Homomorphic Encryption. Serving a{"\ "}
+            <span className="text-white font-semibold">$500B+ informal savings market</span> used by
             1.2 billion people worldwide — with complete on-chain privacy.
           </p>
         </Reveal>
