@@ -1,0 +1,35 @@
+# ── Sensitive / secrets ──────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+tasks/update-bid-abi.cjs
+
+# ── Docs (only README.md is tracked) ─────────────────────────────────────────
+*.md
+!README.md
+
+# ── Hardhat / Solidity build outputs ─────────────────────────────────────────
+node_modules/
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json
+
+# ── Frontend build outputs ────────────────────────────────────────────────────
+frontend/dist/
+frontend/node_modules/
+frontend/.tanstack/
+frontend/.wrangler/
+frontend/.output/
+frontend/.vinxi/
+frontend/.nitro/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.log
+.DS_Store
+Thumbs.db
