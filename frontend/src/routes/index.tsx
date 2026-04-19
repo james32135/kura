@@ -96,7 +96,7 @@ function Hero() {
             <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
           </span>
-          FHE-Powered · Live on Base Sepolia
+          FHE-Powered · Live on Arbitrum Sepolia
         </motion.div>
 
         <motion.h1
@@ -118,9 +118,10 @@ function Hero() {
 
         <Reveal delay={0.4}>
           <p className="mt-7 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Encrypted community savings circles for{" "}
-            <span className="text-foreground">1.2 billion people</span>. Every contribution private.
-            Every bid sealed. Every credit score portable.
+            The first savings circle protocol where every contribution, bid, and credit score
+            is encrypted using Fully Homomorphic Encryption. Serving a{" "}
+            <span className="text-foreground">$500B+ informal savings market</span> used by
+            1.2 billion people worldwide — with complete on-chain privacy.
           </p>
         </Reveal>
 
@@ -149,7 +150,7 @@ function Hero() {
             {[
               { v: "$500B+", l: "Informal Savings Market" },
               { v: "1.2B", l: "People Using Savings Circles" },
-              { v: "14", l: "FHE Operations" },
+              { v: "6", l: "Smart Contracts Deployed" },
             ].map((s) => (
               <div key={s.l} className="text-center">
                 <div className="font-display font-semibold text-3xl sm:text-5xl text-gradient">
@@ -372,19 +373,25 @@ function ThreeLayers() {
       icon: CircleDollarSign,
       file: "KuraCircle.sol",
       t: "Encrypted Contributions",
-      d: "Members deposit encrypted amounts. The contract verifies you meet the minimum and accumulates the pool — all on ciphertext.",
+      d: "Members deposit encrypted amounts via FHE.asEuint64(). The contract verifies minimums with FHE.gte() and accumulates the pool on ciphertext — no member sees what anyone else put in.",
     },
     {
       icon: Gavel,
       file: "KuraBid.sol",
       t: "Sealed-Bid Allocation",
-      d: "Each round, members bid privately. The lowest bid wins the pool. Losing bids are never decrypted. Zero information leakage.",
+      d: "Each round, members bid privately for the pool. KuraBid v2 uses FHE.lte() + FHE.select() to auto-detect the lowest bidder. Losing bids are never decrypted. Ever.",
     },
     {
       icon: Shield,
       file: "KuraCredit.sol",
       t: "Encrypted Credit Score",
-      d: "Every timely contribution builds an encrypted reputation. DeFi protocols verify your creditworthiness without seeing the number.",
+      d: "Every timely contribution increments an encrypted score via FHE.add(). DeFi protocols verify creditworthiness with FHE.gte() — double-blind, neither score nor threshold revealed.",
+    },
+    {
+      icon: Network,
+      file: "KuraEscrowAdapter.sol",
+      t: "ReineiraOS Escrow Bridge",
+      d: "Bridges KURA to ConfidentialEscrow — winners claim payouts through a credit-gated escrow. KuraConditionResolver enforces tier-based access control on-chain.",
     },
   ];
 
@@ -394,11 +401,14 @@ function ThreeLayers() {
         <Reveal>
           <SectionLabel>Architecture</SectionLabel>
           <h2 className="mt-4 font-display font-semibold text-4xl md:text-6xl tracking-tight max-w-3xl">
-            Three contracts. <span className="text-gradient-accent">Complete privacy.</span>
+            Six contracts. <span className="text-gradient-accent">Complete privacy.</span>
           </h2>
+          <p className="mt-4 text-base text-muted-foreground max-w-2xl">
+            All deployed on Arbitrum Sepolia. Every storage slot is a ciphertext handle — block explorers see only hashes, never values.
+          </p>
         </Reveal>
 
-        <div className="mt-16 grid md:grid-cols-3 gap-5">
+        <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           {layers.map((l, i) => (
             <Reveal key={l.file} delay={i * 0.1}>
               <div className="group relative h-full rounded-2xl border border-border/60 bg-card/60 p-8 overflow-hidden transition hover:border-primary/40">
@@ -407,7 +417,7 @@ function ThreeLayers() {
                   <l.icon className="h-5 w-5 text-primary" />
                 </div>
                 <p className="mt-6 font-mono text-xs text-muted-foreground">{l.file}</p>
-                <h3 className="mt-2 font-display text-2xl font-semibold">{l.t}</h3>
+                <h3 className="mt-2 font-display text-xl font-semibold">{l.t}</h3>
                 <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{l.d}</p>
               </div>
             </Reveal>
@@ -462,14 +472,14 @@ function Roadmap() {
   const waves = [
     {
       n: "Wave 2",
-      t: "Core Circle",
-      d: "Encrypted deposits, round rotation, basic allocation, deployed contracts, live dApp.",
+      t: "Full Protocol — Live",
+      d: "Encrypted contributions (KuraCircle), sealed-bid auction (KuraBid v2), encrypted credit scoring (KuraCredit), one-click auto-settle, multi-circle support, ReineiraOS escrow integration — all deployed and functional on Arbitrum Sepolia.",
       status: "live",
     },
     {
       n: "Wave 3",
-      t: "Sealed Bids + Credit",
-      d: "Sealed-bid auction for pool allocation plus encrypted credit scoring with Privara payment integration.",
+      t: "Payment Rails + Mobile",
+      d: "Fiat on-ramp via Privara SDK, mobile-optimized UI, push notifications for round deadlines, and cross-circle reputation aggregation.",
       status: "active",
     },
     {
@@ -561,13 +571,15 @@ function StatusPill({ status }: { status: string }) {
 function TechStack() {
   const items = [
     "Fhenix CoFHE",
-    "@cofhe/sdk",
+    "@cofhe/sdk 0.4",
     "Solidity 0.8.25",
-    "React 18",
+    "React 19",
     "TypeScript",
-    "Vite",
-    "Privara SDK",
-    "Base Sepolia",
+    "Vite 7",
+    "wagmi / viem",
+    "Arbitrum Sepolia",
+    "RainbowKit",
+    "TanStack Router",
   ];
   return (
     <section className="relative py-24 px-6 border-y border-border/60">

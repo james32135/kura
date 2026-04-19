@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
-import { Github, BookOpen, Network } from "lucide-react";
+import { Github, BookOpen } from \"lucide-react\";
 
 export function Footer() {
   return (
@@ -24,20 +24,19 @@ export function Footer() {
             </div>
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Resources</p>
-              <a href="#" className="flex items-center gap-1.5 text-foreground/80 hover:text-foreground"><BookOpen className="h-3.5 w-3.5" />Whitepaper</a>
-              <a href="#" className="flex items-center gap-1.5 text-foreground/80 hover:text-foreground"><Network className="h-3.5 w-3.5" />Architecture</a>
-              <a href="#" className="flex items-center gap-1.5 text-foreground/80 hover:text-foreground"><Github className="h-3.5 w-3.5" />GitHub</a>
+              <Link to="/docs" className="flex items-center gap-1.5 text-foreground/80 hover:text-foreground"><BookOpen className="h-3.5 w-3.5" />Documentation</Link>
+              <a href="https://github.com/james32135/kura" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-foreground/80 hover:text-foreground"><Github className="h-3.5 w-3.5" />GitHub</a>
             </div>
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Network</p>
-              <p className="text-foreground/80">Base Sepolia</p>
+              <p className="text-foreground/80">Arbitrum Sepolia</p>
               <p className="text-foreground/80">Fhenix CoFHE</p>
             </div>
           </div>
         </div>
         <div className="mt-14 pt-6 border-t border-border/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} KURA Protocol. All rights reserved.</p>
-          <p className="font-mono">v0.1.0 · base-sepolia</p>
+          <p className="font-mono">v2.0.0 · arb-sepolia</p>
         </div>
       </div>
     </footer>

@@ -1,24 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
-import { Lock, Network, Code2, BookOpen, ChevronDown } from "lucide-react";
+import { Lock, Network, Code2, BookOpen, ChevronDown, Shield, Layers, Zap, Users, GitBranch } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
-      { title: "Docs — KURA Protocol" },
+      { title: "Documentation — KURA Protocol" },
       {
         name: "description",
         content:
-          "Protocol overview, architecture, and smart contract reference for KURA encrypted savings circles.",
+          "Official KURA Protocol documentation — architecture, smart contracts, FHE operations, and developer reference.",
       },
-      { property: "og:title", content: "Docs — KURA Protocol" },
+      { property: "og:title", content: "Documentation — KURA Protocol" },
       {
         property: "og:description",
-        content: "Protocol overview, architecture, and smart contract reference for KURA.",
+        content: "Complete technical documentation for the KURA encrypted savings circle protocol.",
       },
     ],
   }),
@@ -28,9 +28,12 @@ export const Route = createFileRoute("/docs")({
 const sections = [
   { id: "overview", label: "Overview", icon: BookOpen },
   { id: "architecture", label: "Architecture", icon: Network },
-  { id: "fhe", label: "How FHE Works", icon: Lock },
   { id: "contracts", label: "Smart Contracts", icon: Code2 },
-  { id: "faq", label: "FAQ", icon: BookOpen },
+  { id: "fhe", label: "FHE Operations", icon: Lock },
+  { id: "access", label: "Access Control", icon: Shield },
+  { id: "flow", label: "Data Flow", icon: Layers },
+  { id: "deployment", label: "Deployment", icon: Zap },
+  { id: "faq", label: "FAQ", icon: Users },
 ];
 
 function Docs() {
@@ -41,14 +44,14 @@ function Docs() {
         <div className="absolute inset-0 bg-radial-glow opacity-40 pointer-events-none" />
         <div className="relative max-w-3xl mx-auto text-center">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-primary">
-            Documentation
+            Official Documentation
           </p>
           <h1 className="mt-4 font-display text-5xl md:text-6xl font-semibold tracking-tight">
-            How <span className="text-gradient-accent">KURA</span> works.
+            KURA <span className="text-gradient-accent">Protocol</span> Docs
           </h1>
-          <p className="mt-5 text-muted-foreground">
-            A walk-through of the protocol, architecture, and the FHE primitives that make
-            encrypted savings circles possible.
+          <p className="mt-5 text-muted-foreground max-w-2xl mx-auto">
+            Complete technical reference for the encrypted savings circle protocol.
+            Six smart contracts, 14 FHE operations, deployed on Arbitrum Sepolia with Fhenix CoFHE.
           </p>
         </div>
       </div>
@@ -71,93 +74,269 @@ function Docs() {
         </aside>
 
         <article className="space-y-20 max-w-3xl">
-          <Section id="overview" eyebrow="Overview" title="Protocol overview">
+          {/* ── OVERVIEW ── */}
+          <Section id="overview" eyebrow="Overview" title="What is KURA?">
             <p>
-              KURA is a savings-circle protocol where every contribution, bid, and credit
-              score is encrypted using Fully Homomorphic Encryption. Members deposit
-              ciphertexts; the contract performs arithmetic and comparisons on those
-              ciphertexts; only the round winner ever decrypts a payout.
+              KURA is an on-chain savings circle protocol where <strong>every contribution, bid, and credit
+              score is encrypted</strong> using Fully Homomorphic Encryption (FHE). Members deposit
+              ciphertexts; the smart contracts perform arithmetic and comparisons on those
+              ciphertexts; only the round winner ever decrypts a payout amount.
             </p>
             <p>
-              The result is a financial primitive that mirrors the social structure of
-              chamas, tandas, stokvels, and chit funds — but eliminates the failure modes
-              that come from on-chain transparency or trusted leadership.
+              The protocol mirrors the social structure of chamas (Kenya), tandas (Mexico),
+              stokvels (South Africa), and chit funds (India) — serving a $500B+ informal savings
+              market used by 1.2 billion people — but eliminates the failure modes caused by
+              financial transparency: social shame, leader coercion, free-rider fraud, and zero
+              credit history.
+            </p>
+            <p>
+              KURA is built on Fhenix CoFHE with the <code>@cofhe/sdk</code> and deployed on
+              Arbitrum Sepolia (chain 421614). The frontend is a React 19 SPA using wagmi, viem,
+              RainbowKit, and TanStack Router.
             </p>
           </Section>
 
+          {/* ── ARCHITECTURE ── */}
           <Section id="architecture" eyebrow="Architecture" title="System architecture">
             <p>
-              KURA is composed of three Solidity contracts that coordinate via shared
-              encrypted state. The browser handles encryption, signing, and decryption via
-              the CoFHE SDK.
+              KURA is composed of six Solidity contracts coordinating via shared encrypted state.
+              The browser handles client-side encryption, transaction signing, and private decryption
+              through the CoFHE SDK. All FHE computation runs on Fhenix coprocessors — the EVM
+              never sees plaintext.
             </p>
-            <pre className="rounded-xl bg-background/80 border border-border/60 p-5 font-mono text-xs leading-relaxed overflow-x-auto">{`Browser (CoFHE SDK)
-   │ encrypt(amount) → ciphertext + proof
+            <pre className="rounded-xl bg-background/80 border border-border/60 p-5 font-mono text-xs leading-relaxed overflow-x-auto">{`Browser (CoFHE SDK · @cofhe/sdk 0.4)
+   │ encrypt(amount) → inEuint64 + proof
    ▼
-KuraCircle.sol  ──FHE.add──►  pool: euint64
+KuraCircle.sol  ──FHE.add──►  poolBalance: euint64
    │ contribute(ct, proof)        │
    ▼                              ▼
-KuraBid.sol     ──FHE.min──►  winner allocation
-   │ bid(ct, proof)               │
+KuraBid.sol v2  ──FHE.lte──►  lowestBidderEnc: eaddress
+   │ submitBid(ct, proof)   FHE.select()
    ▼                              ▼
-KuraCredit.sol  ──FHE.add──►  encrypted score
-                ──FHE.gte──►  pass / fail (bool)`}</pre>
+KuraCredit.sol  ──FHE.add──►  creditScores: euint64
+                ──FHE.gte──►  pass / fail (ebool)
+   ▼
+KuraConditionResolver.sol  ──verifyCondition──►  tier gate
+   ▼
+KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
           </Section>
 
-          <Section id="fhe" eyebrow="How FHE Works" title="Encryption you can compute on">
-            <p>
-              Fully Homomorphic Encryption lets the smart contract perform addition,
-              comparison, minimum, and conditional selection on encrypted values without
-              ever decrypting them. This is the property that makes KURA possible.
-            </p>
-            <ul className="space-y-2 text-muted-foreground list-disc pl-5">
-              <li>
-                <span className="text-foreground font-mono">FHE.add</span> — adds two
-                ciphertexts to produce an encrypted sum.
-              </li>
-              <li>
-                <span className="text-foreground font-mono">FHE.gte</span> — encrypted
-                comparison; result is an encrypted boolean.
-              </li>
-              <li>
-                <span className="text-foreground font-mono">FHE.min</span> — selects the
-                minimum of two ciphertexts; used for sealed-bid auctions.
-              </li>
-              <li>
-                <span className="text-foreground font-mono">FHE.select</span> — encrypted
-                ternary; used for conditional payouts.
-              </li>
-            </ul>
-          </Section>
-
+          {/* ── SMART CONTRACTS ── */}
           <Section id="contracts" eyebrow="Reference" title="Smart contract reference">
+            <p className="text-sm text-muted-foreground mb-6">
+              All contracts deployed on Arbitrum Sepolia. Solidity 0.8.25 with @fhenixprotocol/cofhe-contracts.
+            </p>
+
             <ContractRef
               name="KuraCircle.sol"
+              address="0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047"
               fns={[
-                ["contribute(euint64 amount, bytes proof)", "Submit an encrypted contribution"],
-                ["poolTotal() → euint64", "Returns the encrypted pool"],
-                ["startRound()", "Open the next round (admin only)"],
-                ["closeRound()", "Close current round when deadline elapses"],
+                ["createCircle(maxMembers, roundDuration, totalRounds, InEuint64 minContrib)", "Create a new savings circle with encrypted minimum contribution"],
+                ["joinCircle(circleId)", "Join an existing circle as a member"],
+                ["contribute(circleId, InEuint64 encAmount)", "Submit encrypted contribution — FHE.gte validates, FHE.add accumulates pool"],
+                ["startRound(circleId)", "Open the next round (admin only)"],
+                ["closeRound(circleId)", "Close current round when deadline elapses"],
+                ["transferPool(circleId, winner)", "Transfer encrypted pool balance to round winner"],
+                ["getPoolBalance(circleId) → euint64", "Returns encrypted pool (admin access only)"],
+                ["viewMyContribution(circleId) → euint64", "Returns member's own encrypted contribution"],
               ]}
             />
+
             <ContractRef
-              name="KuraBid.sol"
+              name="KuraBid.sol v2"
+              address="0x5195ED6bB28293080A430F1bE2f3965F0d8ad083"
               fns={[
-                ["sealedBid(euint64 discount, bytes proof)", "Submit an encrypted discount bid"],
-                ["resolveRound()", "FHE.min over all bids → encrypted winner"],
-                ["publishDecryptResult(round)", "Publish only the winning discount"],
+                ["submitBid(circleId, roundId, InEuint64 encBid)", "Submit sealed discount bid — encrypted and compared via FHE.lte"],
+                ["closeRound(circleId, roundId)", "Close bidding, FHE.allowPublic on winner handle"],
+                ["settleRound(circleId, roundId, winner)", "Settle the round and record winner"],
+                ["getLowestBidderEncHandle(circleId, round) → eaddress", "Returns encrypted address of lowest bidder (v2)"],
+                ["getUserBidHandle(circleId, round, user) → euint64", "Returns user's own encrypted bid handle"],
               ]}
             />
+
             <ContractRef
               name="KuraCredit.sol"
+              address="0x26b1ea9Bb8Aa33086Fa5b4D32EA89b2Da6DD4B14"
               fns={[
-                ["scoreOf(address) → euint64", "Returns encrypted KURA score"],
-                ["verify(threshold) → ebool", "Double-blind FHE.gte check"],
-                ["grantPermit(auditor, expiry)", "Time-bound audit access"],
+                ["recordContribution(member)", "Increment encrypted credit score by 1 via FHE.add"],
+                ["recordCircleCompletion(member)", "Award +5 points for completing a full circle"],
+                ["verifyCreditworthiness(member, InEuint64 threshold) → ebool", "Double-blind FHE.gte — neither score nor threshold revealed"],
+                ["getCreditScore(member) → euint64", "Returns encrypted score (member access only)"],
+                ["getCreditStats(member)", "Returns contribution count, on-time, late, circles completed, tier"],
+              ]}
+            />
+
+            <ContractRef
+              name="KuraConditionResolver.sol"
+              address="0x2aa7CC7BeCBc274cfe7Fef0F38034623c3bDEa7b"
+              fns={[
+                ["verifyCondition(user, conditionData) → bool", "ReineiraOS IConditionResolver — gates escrow redemption on KURA credit tier"],
+              ]}
+            />
+
+            <ContractRef
+              name="KuraEscrowAdapter.sol"
+              address=""
+              fns={[
+                ["createWinnerEscrow(circleId, round, winner, amount)", "Create escrow for round winner via ConfidentialEscrow"],
+                ["claimEscrow(escrowId)", "Winner claims escrow after condition check"],
+                ["claimAndUnwrap(escrowId)", "Claim and unwrap to plain USDC"],
               ]}
             />
           </Section>
 
+          {/* ── FHE OPERATIONS ── */}
+          <Section id="fhe" eyebrow="FHE Primitives" title="Encryption you can compute on">
+            <p>
+              Fully Homomorphic Encryption allows smart contracts to perform arithmetic, comparison,
+              and conditional selection on encrypted values <strong>without decrypting them</strong>.
+              KURA uses 14 distinct FHE operations across its contract suite.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-left">
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">Operation</th>
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">Used In</th>
+                    <th className="py-2 font-mono text-xs text-primary">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted-foreground">
+                  {[
+                    ["FHE.asEuint64()", "All", "Convert encrypted input to euint64"],
+                    ["FHE.asEaddress()", "KuraBid v2", "Convert address to encrypted address"],
+                    ["FHE.add(a, b)", "Circle, Credit", "Pool accumulation, score increment"],
+                    ["FHE.sub(a, b)", "Bid", "Deduct discount from pool payout"],
+                    ["FHE.min(a, b)", "Bid", "Find lowest bid across members"],
+                    ["FHE.gte(a, b)", "Circle, Credit", "Contribution check, credit verification"],
+                    ["FHE.lte(a, b)", "Bid v2", "Compare bids to track lowest"],
+                    ["FHE.eq(a, b)", "Bid", "Winner identification"],
+                    ["FHE.select(cond, a, b)", "Circle, Bid", "Encrypted ternary — conditional logic"],
+                    ["FHE.div(a, b)", "Bid", "Dividend distribution"],
+                    ["FHE.allowThis()", "All", "Contract retains compute access"],
+                    ["FHE.allow(h, addr)", "All", "Grant specific address access to handle"],
+                    ["FHE.allowPublic()", "Bid v2", "Publish encrypted handle for settlement"],
+                    ["FHE.sealoutput()", "All", "Permit-based encrypted viewing"],
+                  ].map(([op, used, purpose]) => (
+                    <tr key={op} className="border-b border-border/30">
+                      <td className="py-2 pr-4 font-mono text-xs text-foreground">{op}</td>
+                      <td className="py-2 pr-4 text-xs">{used}</td>
+                      <td className="py-2 text-xs">{purpose}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-sm">
+              <strong>Decrypt flow:</strong> <code>decryptForView</code> (UI balance reveals via CoFHE SDK) +
+              <code> decryptForTx</code> + <code>publishDecryptResult</code> (on-chain round settlement).
+              All decryption is permission-gated and scoped to specific handles.
+            </p>
+          </Section>
+
+          {/* ── ACCESS CONTROL ── */}
+          <Section id="access" eyebrow="Security" title="Access control model">
+            <p>
+              Every piece of encrypted data has an explicit access control list (ACL). No data is
+              ever globally visible. The principle: <strong>minimum necessary disclosure</strong>.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-left">
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">Data</th>
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">Who Sees</th>
+                    <th className="py-2 font-mono text-xs text-primary">FHE Primitive</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted-foreground">
+                  {[
+                    ["Individual contribution", "Member only", "FHE.allow(handle, member)"],
+                    ["Pool total (encrypted)", "Admin only", "FHE.allow(pool, admin)"],
+                    ["Individual bids", "Bidder only", "FHE.allow(bid, bidder)"],
+                    ["Winning bid (settlement)", "All (published)", "decryptForTx + publishDecryptResult"],
+                    ["Credit score", "Member only", "FHE.allow(score, member)"],
+                    ["Credit check result", "Requester only", "FHE.allow(ebool, requester)"],
+                    ["Raw plaintext data", "NEVER public", "No FHE.allowPublic() on user data"],
+                  ].map(([data, who, prim]) => (
+                    <tr key={data} className="border-b border-border/30">
+                      <td className="py-2 pr-4 text-xs text-foreground">{data}</td>
+                      <td className="py-2 pr-4 text-xs">{who}</td>
+                      <td className="py-2 font-mono text-xs">{prim}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          {/* ── DATA FLOW ── */}
+          <Section id="flow" eyebrow="Data Flow" title="Complete circle round">
+            <pre className="rounded-xl bg-background/80 border border-border/60 p-5 font-mono text-xs leading-relaxed overflow-x-auto">{`MEMBER A                    KURA CONTRACTS                    MEMBER B
+────────                    ──────────────                    ────────
+    │                            │                                │
+    │ 1. contribute(enc($50))    │     contribute(enc($50))       │
+    │ ──────────────────────►    │    ◄────────────────────────── │
+    │                            │                                │
+    │                     FHE.asEuint64(enc)                      │
+    │                     FHE.gte(amount, minimum) ✓              │
+    │                     FHE.add(pool, amount)                   │
+    │                            │                                │
+    │                            │  ──── BIDDING OPENS ────       │
+    │                            │                                │
+    │ 2. submitBid(enc($40))     │     submitBid(enc($35))        │
+    │ ──────────────────────►    │    ◄────────────────────────── │
+    │                            │                                │
+    │                     FHE.lte(bidB, bidA) → true               │
+    │                     FHE.select → lowestBidderEnc = B         │
+    │                            │                                │
+    │                     closeRound → FHE.allowPublic(handle)     │
+    │                     settleRound → Member B wins               │
+    │                     transferPool → encrypted payout           │
+    │                            │                                │
+    │ 3. creditScore += 1        │     creditScore += 1           │
+    │    (encrypted via FHE.add) │     (encrypted via FHE.add)    │
+    │                            │                                │
+    │ 4. viewMyBalance(permit)   │                                │
+    │    → decryptForView        │   Etherscan sees: 0xa3f2...    │
+    │    → Browser shows: $50    │   (ciphertext handle only)     │`}</pre>
+          </Section>
+
+          {/* ── DEPLOYMENT ── */}
+          <Section id="deployment" eyebrow="Deployment" title="Contract addresses">
+            <p>All contracts are deployed on Arbitrum Sepolia (chain ID 421614).</p>
+            <div className="space-y-2 mt-4">
+              {[
+                ["KuraCircle", "0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047"],
+                ["KuraBid v2", "0x5195ED6bB28293080A430F1bE2f3965F0d8ad083"],
+                ["KuraCredit", "0x26b1ea9Bb8Aa33086Fa5b4D32EA89b2Da6DD4B14"],
+                ["KuraConditionResolver", "0x2aa7CC7BeCBc274cfe7Fef0F38034623c3bDEa7b"],
+                ["cUSDC (ConfidentialUSDC)", "0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f"],
+              ].map(([name, addr]) => (
+                <div key={name} className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-border/50 bg-card/30">
+                  <span className="text-sm font-semibold">{name}</span>
+                  <a
+                    href={`https://sepolia.arbiscan.io/address/${addr}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-xs text-primary hover:underline truncate max-w-[360px]"
+                  >
+                    {addr}
+                  </a>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 rounded-xl border border-border/50 bg-card/30 p-4">
+              <h4 className="text-sm font-semibold mb-2">Tech Stack</h4>
+              <div className="flex flex-wrap gap-2">
+                {["Fhenix CoFHE", "@cofhe/sdk 0.4", "Solidity 0.8.25", "React 19", "TypeScript", "Vite 7", "wagmi 2.19", "viem 2.48", "RainbowKit", "TanStack Router", "Tailwind v4", "Framer Motion"].map((t) => (
+                  <span key={t} className="px-2.5 py-1 rounded-full text-xs border border-border/50 bg-background/40 font-mono">{t}</span>
+                ))}
+              </div>
+            </div>
+          </Section>
+
+          {/* ── FAQ ── */}
           <Section id="faq" eyebrow="FAQ" title="Frequently asked">
             <div className="space-y-3">
               {FAQ.map((q) => (
@@ -196,12 +375,24 @@ function Section({
   );
 }
 
-function ContractRef({ name, fns }: { name: string; fns: [string, string][] }) {
+function ContractRef({ name, address, fns }: { name: string; address: string; fns: [string, string][] }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
-      <div className="px-5 py-3 border-b border-border/60 bg-background/40 flex items-center gap-2">
-        <Code2 className="h-3.5 w-3.5 text-primary" />
-        <span className="font-mono text-sm">{name}</span>
+    <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden mb-4">
+      <div className="px-5 py-3 border-b border-border/60 bg-background/40 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Code2 className="h-3.5 w-3.5 text-primary" />
+          <span className="font-mono text-sm font-semibold">{name}</span>
+        </div>
+        {address && (
+          <a
+            href={`https://sepolia.arbiscan.io/address/${address}`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono text-[10px] text-muted-foreground hover:text-primary truncate max-w-[200px]"
+          >
+            {address.slice(0, 6)}...{address.slice(-4)}
+          </a>
+        )}
       </div>
       <ul className="divide-y divide-border/40">
         {fns.map(([sig, desc]) => (
@@ -218,23 +409,35 @@ function ContractRef({ name, fns }: { name: string; fns: [string, string][] }) {
 const FAQ = [
   {
     q: "Who can see my contribution amount?",
-    a: "Nobody. Your amount is encrypted in your browser before it ever reaches the contract. Only you hold the key to decrypt your own balance.",
+    a: "Nobody. Your amount is encrypted client-side using the CoFHE SDK before it reaches the smart contract. Only you can decrypt your own balance using your wallet signature via decryptForView. Not even the circle admin sees individual amounts.",
   },
   {
     q: "What happens if I lose a round bid?",
-    a: "Your bid stays encrypted forever. The contract only ever decrypts the winning discount via publishDecryptResult — losing bids are mathematically inaccessible.",
+    a: "Your bid remains encrypted forever. The contract only publishes the winning bidder's identity during settlement. Losing bids are mathematically inaccessible — they are never decrypted, not now, not ever.",
   },
   {
-    q: "How can DeFi protocols use my KURA score?",
-    a: "Through double-blind verification. The protocol provides their threshold (encrypted), your score is encrypted, and FHE.gte returns a single boolean. Neither value is ever revealed.",
+    q: "How does double-blind credit verification work?",
+    a: "A DeFi protocol submits an encrypted threshold. Your score is already encrypted. FHE.gte() compares them and returns a single encrypted boolean. The protocol never sees your score. You never see their threshold. Only the pass/fail result is disclosed to the requester.",
   },
   {
     q: "What chain does KURA run on?",
-    a: "KURA is live on Base Sepolia for the current wave, using Fhenix CoFHE for FHE operations. Multi-chain support arrives in Wave 5.",
+    a: "KURA is deployed on Arbitrum Sepolia (chain ID 421614) using Fhenix CoFHE for FHE operations. The coprocessor handles all encrypted computation off-chain and returns results to the EVM.",
   },
   {
     q: "Can the circle admin coerce me?",
-    a: "The admin cannot see your contribution amount, your bid, or your score. They can only see counts (e.g. 6 of 8 contributed). Coercion based on amounts is impossible.",
+    a: "No. The admin cannot see contribution amounts, bids, or credit scores. They can only see participation counts (e.g. '6 of 8 contributed'). Financial coercion based on amounts is cryptographically impossible.",
+  },
+  {
+    q: "Why FHE instead of ZK proofs or MPC?",
+    a: "ZK proofs can prove 'I contributed ≥ minimum' but cannot compute pool totals or find the minimum bid across multiple encrypted values. MPC requires all members online simultaneously. FHE allows asynchronous computation on encrypted data with permanent privacy — the only technology that supports sealed-bid auctions on ciphertext.",
+  },
+  {
+    q: "What is the auto-settle feature?",
+    a: "One-click Advance Round in the admin panel automates the entire round lifecycle: close bidding → decrypt lowest bidder (FHE) → settle round → transfer encrypted pool → start next round. Each step requires a wallet confirmation but runs sequentially from a single button.",
+  },
+  {
+    q: "How does KURA integrate with ReineiraOS?",
+    a: "KuraConditionResolver implements the IConditionResolver interface to gate escrow redemption on KURA credit tiers. KuraEscrowAdapter creates winner escrows via ConfidentialEscrow, where winners claim payouts only after passing the credit tier check.",
   },
 ];
 
