@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
-import { Github, BookOpen } from \"lucide-react\";
+import { Github, BookOpen } from "lucide-react";
 
 export function Footer() {
   return (
