@@ -118,10 +118,11 @@ function Hero() {
 
         <Reveal delay={0.4}>
           <p className="mt-7 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed text-white/70">
-            The first savings circle protocol where every contribution, bid, and credit score
-            is encrypted using Fully Homomorphic Encryption. Serving a{"\ "}
-            <span className="text-white font-semibold">$500B+ informal savings market</span> used by
-            1.2 billion people worldwide — with complete on-chain privacy.
+            The first protocol where contributions, bids, and credit scores live as{" "}
+            <code className="text-white/90 bg-white/10 px-1.5 py-0.5 rounded text-sm">euint64</code> ciphertext.
+            Block explorers see hashes — members see their own balances.{" "}
+            <span className="text-white font-semibold">$500B+ informal savings market</span>,{" "}
+            1.2 billion people, zero on-chain plaintext.
           </p>
         </Reveal>
 
@@ -150,7 +151,7 @@ function Hero() {
             {[
               { v: "$500B+", l: "Informal Savings Market" },
               { v: "1.2B", l: "People Using Savings Circles" },
-              { v: "6", l: "Smart Contracts Deployed" },
+              { v: "14", l: "FHE Operations Used" },
             ].map((s) => (
               <div key={s.l} className="text-center">
                 <div className="font-display font-semibold text-3xl sm:text-5xl text-gradient">
@@ -185,25 +186,25 @@ function HowItWorks() {
       n: "01",
       icon: Lock,
       t: "Encrypt & Deposit",
-      d: "Your contribution amount is encrypted client-side before it ever touches the blockchain. Nobody — not even the circle admin — can see how much you put in.",
+      d: "Your contribution is encrypted client-side via FHE.asEuint64() before touching the chain. Nobody — not the admin, not a block explorer, not a validator — sees your amount.",
     },
     {
       n: "02",
       icon: Layers,
       t: "Pool Accumulates",
-      d: "The smart contract adds encrypted contributions together using FHE.add(). The pool total is real but invisible. Only math, no plaintext.",
+      d: "The smart contract sums encrypted contributions via FHE.add(). The pool total is computed on ciphertext — cryptographically real, mathematically verified, permanently invisible.",
     },
     {
       n: "03",
       icon: Gavel,
       t: "Sealed-Bid Auction",
-      d: "Each round, members bid privately for the pool. FHE.min() finds the lowest bid. Losing bids are NEVER revealed. Not now, not ever.",
+      d: "Members bid privately each round. KuraBid v2 uses FHE.lte() + FHE.select() to auto-detect the lowest bidder as an eaddress. Losing bids are never decrypted — ever.",
     },
     {
       n: "04",
       icon: TrendingUp,
       t: "Build Credit",
-      d: "Every timely contribution earns encrypted credit. Prove your reliability to DeFi lenders without revealing your score. Double-blind verification.",
+      d: "Every timely contribution earns +1 encrypted point via FHE.add(). Circle completion earns +5. Prove reliability to DeFi lenders through FHE.gte() — double-blind, neither score nor threshold revealed.",
     },
   ];
 
@@ -304,18 +305,18 @@ function Problem() {
 
 function WhyFHE() {
   const without = [
-    "Visible contributions",
-    "Social pressure",
-    "Coercion by leaders",
+    "Visible contribution amounts",
+    "Social pressure & judgment",
+    "Leader coercion & embezzlement",
     "No on-chain enforcement",
-    "No portable credit",
+    "No portable credit history",
   ];
   const withKura = [
-    "Encrypted contributions",
-    "Sealed-bid allocation",
-    "On-chain enforcement",
-    "Portable encrypted credit",
-    "Zero information leakage",
+    "euint64 encrypted contributions",
+    "Sealed-bid allocation (FHE.lte)",
+    "On-chain FHE enforcement",
+    "Portable encrypted credit (5 tiers)",
+    "14 FHE operations, zero plaintext",
   ];
 
   return (
@@ -373,25 +374,25 @@ function ThreeLayers() {
       icon: CircleDollarSign,
       file: "KuraCircle.sol",
       t: "Encrypted Contributions",
-      d: "Members deposit encrypted amounts via FHE.asEuint64(). The contract verifies minimums with FHE.gte() and accumulates the pool on ciphertext — no member sees what anyone else put in.",
+      d: "Members deposit via FHE.asEuint64(). The contract validates minimums with FHE.gte(), accepts conditionally with FHE.select(), and accumulates the pool with FHE.add(). All storage is euint64 handles — Etherscan sees hashes, never USDC amounts.",
     },
     {
       icon: Gavel,
       file: "KuraBid.sol",
       t: "Sealed-Bid Allocation",
-      d: "Each round, members bid privately for the pool. KuraBid v2 uses FHE.lte() + FHE.select() to auto-detect the lowest bidder. Losing bids are never decrypted. Ever.",
+      d: "Members submit encrypted discount bids each round. KuraBid v2 compares bids with FHE.lte() and tracks the lowest bidder as an encrypted eaddress via FHE.select(). Settlement uses decryptForTx + publishDecryptResult. Losing bids stay encrypted forever.",
     },
     {
       icon: Shield,
       file: "KuraCredit.sol",
       t: "Encrypted Credit Score",
-      d: "Every timely contribution increments an encrypted score via FHE.add(). DeFi protocols verify creditworthiness with FHE.gte() — double-blind, neither score nor threshold revealed.",
+      d: "+1 point per contribution, +5 per circle completion, accumulated as euint64 via FHE.add(). Five tiers from Newcomer to Elite. External protocols verify with FHE.gte(score, threshold) — double-blind: neither score nor threshold is revealed.",
     },
     {
       icon: Network,
       file: "KuraEscrowAdapter.sol",
       t: "ReineiraOS Escrow Bridge",
-      d: "Bridges KURA to ConfidentialEscrow — winners claim payouts through a credit-gated escrow. KuraConditionResolver enforces tier-based access control on-chain.",
+      d: "KuraConditionResolver implements ReineiraOS IConditionResolver — gating escrow redemption on encrypted credit tiers. KuraEscrowAdapter bridges pool payouts to ConfidentialEscrow with claim/unwrap.",
     },
   ];
 
@@ -432,11 +433,12 @@ function ThreeLayers() {
 
 function MarketValidation() {
   const items = [
-    { k: "Money Fellows", v: "$31M Series B raised doing savings circles WITHOUT privacy" },
-    { k: "India", v: "150M+ people use chit funds" },
-    { k: "South Africa", v: "$50B+ annual stokvel circulation" },
-    { k: "Mexico", v: "60% of the population participates in tandas" },
-    { k: "Philippines", v: "eqb reached 100K users in 12 months" },
+    { k: "Money Fellows", v: "$31M Series B raised — savings circles without privacy. Imagine with it." },
+    { k: "India", v: "150M+ people use chit funds — the single largest informal savings mechanism on Earth" },
+    { k: "South Africa", v: "$50B+ annual stokvel circulation. Every rand of it visible to every member." },
+    { k: "Mexico", v: "60% of the population participates in tandas — deeply cultural, deeply transparent" },
+    { k: "Philippines", v: "eqb reached 100K users in 12 months. All contribution amounts exposed." },
+    { k: "Privacy Gap", v: "Every existing solution exposes amounts. KURA is the first to encrypt everything on-chain." },
   ];
 
   return (
@@ -445,8 +447,8 @@ function MarketValidation() {
         <Reveal>
           <SectionLabel>Market Validation</SectionLabel>
           <h2 className="mt-4 font-display font-semibold text-4xl md:text-6xl tracking-tight max-w-4xl">
-            This market exists. It's massive.{" "}
-            <span className="text-gradient-accent">It's proven.</span>
+            $500B+ market. 1.2B people.{" "}
+            <span className="text-gradient-accent">Proven demand.</span>
           </h2>
         </Reveal>
 
@@ -473,7 +475,7 @@ function Roadmap() {
     {
       n: "Wave 2",
       t: "Full Protocol — Live",
-      d: "Encrypted contributions (KuraCircle), sealed-bid auction (KuraBid v2), encrypted credit scoring (KuraCredit), one-click auto-settle, multi-circle support, ReineiraOS escrow integration — all deployed and functional on Arbitrum Sepolia.",
+      d: "All 6 contracts deployed on Arbitrum Sepolia: KuraCircle (encrypted contributions + pool), KuraBid v2 (sealed-bid with eaddress auto-detection), KuraCredit (5-tier encrypted scoring), KuraConditionResolver + KuraEscrowAdapter (ReineiraOS integration). One-click auto-settle, multi-circle support, production dApp with client-side FHE via @cofhe/sdk 0.4.",
       status: "live",
     },
     {

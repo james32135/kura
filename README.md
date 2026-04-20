@@ -4,9 +4,11 @@
 
 ### *"Save Together. Know Nothing."*
 
-**The first savings circle protocol where every contribution, bid, and credit score is encrypted using Fully Homomorphic Encryption.**
+**The first savings circle protocol where every contribution, bid, and credit score is `euint64` ciphertext — computed on-chain via FHE, never decrypted.**
 
-[Launch App](https://kura-protocol.vercel.app/app) · [Documentation](https://kura-protocol.vercel.app/docs) · [Arbitrum Sepolia](https://sepolia.arbiscan.io/address/0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047)
+[![Arbitrum Sepolia](https://img.shields.io/badge/Arbitrum_Sepolia-Live-blue?style=flat-square)](https://sepolia.arbiscan.io/address/0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047) [![Contracts](https://img.shields.io/badge/Smart_Contracts-6_Deployed-teal?style=flat-square)]() [![FHE Ops](https://img.shields.io/badge/FHE_Operations-14-purple?style=flat-square)]() [![Fhenix CoFHE](https://img.shields.io/badge/Fhenix_CoFHE-@cofhe/sdk_0.4-orange?style=flat-square)]()
+
+[Launch App](https://kura-protocol.vercel.app/app) · [Documentation](https://kura-protocol.vercel.app/docs) · [Arbiscan](https://sepolia.arbiscan.io/address/0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047)
 
 </div>
 
@@ -14,9 +16,9 @@
 
 ## The Problem — $500B Market, Zero Privacy
 
-**1.2 billion people** save through informal community circles — chit funds (India, $80B+), stokvels (South Africa, $50B+), tandas (Mexico), susus (West Africa), paluwagan (Philippines). These are the **#1 savings mechanism** in developing economies.
+**1.2 billion people** across 50+ countries save through informal community circles — chit funds (India, $80B+), stokvels (South Africa, $50B+), tandas (Mexico), susus (West Africa), paluwagan (Philippines). These circles are the **#1 savings mechanism** in developing economies, predating modern banking by centuries.
 
-They break because of transparency:
+They break because of one design flaw: **transparency.**
 
 | Failure Mode | What Happens |
 |---|---|
@@ -31,9 +33,9 @@ They break because of transparency:
 
 ## The Solution — Six Smart Contracts, Complete Privacy
 
-KURA encrypts every financial action using **Fhenix CoFHE** (Fully Homomorphic Encryption). All values are ``euint64`` ciphertext — block explorers see only hashes, never amounts.
+KURA encrypts every financial action using **Fhenix CoFHE** (Fully Homomorphic Encryption). Every value stored on-chain is a ``euint64`` ciphertext handle — block explorers see ``0xa3f2...``, never ``$50.00``.
 
-### Contract Architecture
+### Contract Architecture (All Deployed on Arbitrum Sepolia)
 
 | Contract | Address (Arb Sepolia) | Purpose |
 |---|---|---|
@@ -41,7 +43,7 @@ KURA encrypts every financial action using **Fhenix CoFHE** (Fully Homomorphic E
 | **KuraBid.sol v2** | ``0x5195ED6bB28293080A430F1bE2f3965F0d8ad083`` | Sealed-bid auction — FHE.lte auto-detects lowest bidder |
 | **KuraCredit.sol** | ``0x26b1ea9Bb8Aa33086Fa5b4D32EA89b2Da6DD4B14`` | Encrypted credit score — double-blind verification |
 | **KuraConditionResolver** | ``0x2aa7CC7BeCBc274cfe7Fef0F38034623c3bDEa7b`` | ReineiraOS escrow gate — credit tier enforcement |
-| **KuraEscrowAdapter** | — | Bridge to ConfidentialEscrow for winner payouts |
+| **KuraEscrowAdapter** | ``0xd36De25daeE4Dc1D54c530FE25aD03a195FDf642`` | Bridge to ConfidentialEscrow for winner payouts |
 | **cUSDC (Test)** | ``0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f`` | Test stablecoin for circle deposits |
 
 ### How a Round Works
@@ -114,20 +116,29 @@ FHE.add(creditScore, 1)               →  build encrypted reputation
 
 ---
 
-## Wave 2 — What We Built
+## Wave 2 — What We Built (Current)
 
-Everything below is **deployed and functional** on Arbitrum Sepolia:
+Everything below is **deployed and functional** on Arbitrum Sepolia with a production-ready frontend:
 
-- **KuraCircle.sol** — Full circle lifecycle: create, join, encrypted contribute, round rotation, pool transfer
-- **KuraBid.sol v2** — Sealed-bid auction with ``FHE.lte`` + ``FHE.select`` auto-detection of lowest bidder via ``eaddress``
-- **KuraCredit.sol** — Encrypted credit scoring: +1 per contribution, +5 per circle completion, double-blind ``FHE.gte`` verification
+### Smart Contracts (6 Deployed)
+- **KuraCircle.sol** — Full circle lifecycle: create, join, encrypted contribute (FHE.asEuint64 + FHE.gte validation + FHE.add accumulation), round rotation, pool transfer
+- **KuraBid.sol v2** — Sealed-bid auction with ``FHE.lte`` + ``FHE.select`` auto-detection of lowest bidder via ``eaddress``. Settlement via ``decryptForTx`` + ``publishDecryptResult``
+- **KuraCredit.sol** — Encrypted credit scoring: +1 per contribution, +5 per circle completion, five tiers (Newcomer→Contributor→Reliable→Trusted→Elite), double-blind ``FHE.gte`` verification
 - **KuraConditionResolver.sol** — ReineiraOS ``IConditionResolver`` for credit-gated escrow release
 - **KuraEscrowAdapter.sol** — Bridge to ConfidentialEscrow with claim/unwrap flow
+- **cUSDC** — Confidential USDC (ConfidentialERC20) for circle deposits
+
+### Protocol Features
 - **Multi-circle support** — Create, join, and manage multiple circles simultaneously
 - **One-click auto-settle** — Admin clicks once → close bidding → detect winner (FHE) → settle → transfer pool → advance round
-- **Production frontend** — React 19, wagmi/viem, RainbowKit, TanStack Router, client-side FHE encryption/decryption
-- **Encrypted balance reveals** — ``decryptForView`` with sessionStorage caching
-- **Encrypted credit tiers** — Newcomer → Contributor → Reliable → Trusted → Elite with point thresholds
+- **14 FHE operations** — asEuint64, asEaddress, add, sub, min, gte, lte, eq, select, div, allowThis, allow, allowPublic, sealoutput
+- **Client-side FHE encryption** — @cofhe/sdk 0.4 encrypts values in the browser before any transaction
+
+### Production Frontend
+- **React 19 SPA** with wagmi 2.19, viem 2.48, RainbowKit, TanStack Router, Tailwind v4, Framer Motion
+- **5 interactive pages** — Dashboard (live circle state), Contribute (3-step encrypted flow), Bid (sealed-bid submission), Reputation (encrypted score + tier + double-blind verification), Admin (circle management + auto-settle)
+- **Encrypted balance reveals** — ``decryptForView`` with sessionStorage caching + stale-permit retry
+- **FHE flow diagrams** — SVG visualizations explaining each encrypted step to users
 
 ---
 
@@ -166,10 +177,10 @@ Everything below is **deployed and functional** on Arbitrum Sepolia:
 
 | Wave | Deliverable | Status |
 |---|---|---|
-| **2** | Full protocol: encrypted circles, sealed-bid v2, credit scoring, escrow, multi-circle, auto-settle, production dApp | **Live** ✅ |
-| **3** | Fiat on-ramp (Privara SDK), mobile UI, push notifications, cross-circle reputation | In Progress |
-| **4** | DeFi credit bridge — KURA score → undercollateralized lending qualification | Next |
-| **5** | Multi-chain circles, FHERC20 savings token, institutional API | Planned |
+| **2** | Full protocol: 6 contracts, 14 FHE ops, sealed-bid v2 with eaddress, encrypted credit (5 tiers), ReineiraOS escrow, auto-settle, production dApp | **Live** ✅ |
+| **3** | Fiat on-ramp (Privara SDK), mobile-responsive UI, push notifications, cross-circle reputation portability | In Progress 🔨 |
+| **4** | DeFi credit bridge — KURA encrypted score → undercollateralized lending qualification via double-blind FHE.gte | Next 📋 |
+| **5** | Multi-chain circles (Ethereum, Polygon), $KURA FHERC20 savings token, institutional API, governance | Planned 🗓️ |
 
 ---
 
@@ -189,7 +200,20 @@ npm run build      # Production build (tsc + vite)
 npm run type-check # TypeScript validation
 ```
 
-Requires Node 18+, Arbitrum Sepolia RPC, and a wallet with testnet ETH.
+Requires Node 18+, Arbitrum Sepolia RPC, and a wallet with testnet ETH + cUSDC.
+
+---
+
+## Security Model
+
+| Threat | Mitigation |
+|---|---|
+| Curious admin reads contributions | Contributions stored as ``euint64`` handles — admin sees count only, never amounts |
+| Block explorer exposes bids | Bids are encrypted calldata — Etherscan sees ``InEuint64`` structs, not plaintext |
+| Losing bidder's amount leaked | Only winning bidder published via ``decryptForTx`` — losing bids encrypted forever |
+| DeFi lender learns exact credit score | ``verifyCreditworthiness`` uses double-blind ``FHE.gte`` — returns ``ebool`` only |
+| Front-running sealed-bid auction | Bids are ciphertext — validators cannot read values to front-run |
+| Replay of encrypted values | Each FHE input includes a unique proof bound to the sender — replay fails verification |
 
 ---
 

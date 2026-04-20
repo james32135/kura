@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
-import { Lock, Network, Code2, BookOpen, ChevronDown, Shield, Layers, Zap, Users, GitBranch } from "lucide-react";
+import { Lock, Network, Code2, BookOpen, ChevronDown, Shield, Layers, Zap, Users, GitBranch, AlertTriangle, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -30,7 +30,9 @@ const sections = [
   { id: "architecture", label: "Architecture", icon: Network },
   { id: "contracts", label: "Smart Contracts", icon: Code2 },
   { id: "fhe", label: "FHE Operations", icon: Lock },
+  { id: "why-fhe", label: "Why FHE", icon: Sparkles },
   { id: "access", label: "Access Control", icon: Shield },
+  { id: "threats", label: "Threat Model", icon: AlertTriangle },
   { id: "flow", label: "Data Flow", icon: Layers },
   { id: "deployment", label: "Deployment", icon: Zap },
   { id: "faq", label: "FAQ", icon: Users },
@@ -50,8 +52,9 @@ function Docs() {
             KURA <span className="text-gradient-accent">Protocol</span> Docs
           </h1>
           <p className="mt-5 text-muted-foreground max-w-2xl mx-auto">
-            Complete technical reference for the encrypted savings circle protocol.
-            Six smart contracts, 14 FHE operations, deployed on Arbitrum Sepolia with Fhenix CoFHE.
+            Complete technical reference — six smart contracts, 14 FHE operations, five encrypted
+            credit tiers, sealed-bid auction with eaddress tracking, and ReineiraOS escrow
+            integration. Deployed on Arbitrum Sepolia with Fhenix CoFHE.
           </p>
         </div>
       </div>
@@ -78,21 +81,25 @@ function Docs() {
           <Section id="overview" eyebrow="Overview" title="What is KURA?">
             <p>
               KURA is an on-chain savings circle protocol where <strong>every contribution, bid, and credit
-              score is encrypted</strong> using Fully Homomorphic Encryption (FHE). Members deposit
-              ciphertexts; the smart contracts perform arithmetic and comparisons on those
-              ciphertexts; only the round winner ever decrypts a payout amount.
+              score exists as <code>euint64</code> ciphertext</strong> — computed on using Fully Homomorphic Encryption (FHE).
+              Members deposit encrypted values; smart contracts perform arithmetic, comparison, and conditional selection
+              on those ciphertexts; block explorers see only handles; and only the round winner ever decrypts a payout.
             </p>
             <p>
               The protocol mirrors the social structure of chamas (Kenya), tandas (Mexico),
-              stokvels (South Africa), and chit funds (India) — serving a $500B+ informal savings
-              market used by 1.2 billion people — but eliminates the failure modes caused by
-              financial transparency: social shame, leader coercion, free-rider fraud, and zero
-              credit history.
+              stokvels (South Africa), and chit funds (India) — serving a <strong>$500B+ informal savings
+              market</strong> used by 1.2 billion people — but eliminates the failure modes caused by
+              financial transparency: social shame, leader coercion, free-rider fraud, and absence of credit history.
             </p>
             <p>
-              KURA is built on Fhenix CoFHE with the <code>@cofhe/sdk</code> and deployed on
+              Six Solidity contracts use <strong>14 distinct FHE operations</strong> (add, sub, min, gte, lte, eq, select, div,
+              asEuint64, asEaddress, allow, allowThis, allowPublic, sealoutput) to implement encrypted pool accumulation,
+              sealed-bid auctions with eaddress tracking, five-tier encrypted credit scoring, and ReineiraOS escrow integration.
+            </p>
+            <p>
+              Built on Fhenix CoFHE with <code>@cofhe/sdk 0.4</code>, deployed on
               Arbitrum Sepolia (chain 421614). The frontend is a React 19 SPA using wagmi, viem,
-              RainbowKit, and TanStack Router.
+              RainbowKit, and TanStack Router with client-side FHE encryption.
             </p>
           </Section>
 
@@ -234,6 +241,45 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
             </p>
           </Section>
 
+          {/* ── WHY FHE ── */}
+          <Section id="why-fhe" eyebrow="Rationale" title="Why FHE over ZK or MPC?">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-left">
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">Capability</th>
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">ZK Proofs</th>
+                    <th className="py-2 pr-4 font-mono text-xs text-primary">MPC</th>
+                    <th className="py-2 font-mono text-xs text-primary">FHE (KURA)</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted-foreground">
+                  {[
+                    ["Sum encrypted values on-chain", "No", "Requires all online", "Yes — FHE.add()"],
+                    ["Compare two secrets", "Limited", "Possible, slow", "Yes — FHE.lte() / FHE.gte()"],
+                    ["Sealed-bid on ciphertext", "No", "Partial", "Yes — FHE.select(eaddress)"],
+                    ["Permanent privacy of losing bids", "N/A", "N/A", "Yes — never decrypted"],
+                    ["Asynchronous participation", "Yes", "No — all must be online", "Yes — deposit anytime"],
+                    ["Composable on-chain credit", "Attestation only", "No", "Yes — double-blind FHE.gte()"],
+                  ].map(([cap, zk, mpc, fhe]) => (
+                    <tr key={cap} className="border-b border-border/30">
+                      <td className="py-2 pr-4 text-xs text-foreground font-medium">{cap}</td>
+                      <td className="py-2 pr-4 text-xs">{zk}</td>
+                      <td className="py-2 pr-4 text-xs">{mpc}</td>
+                      <td className="py-2 text-xs text-primary font-medium">{fhe}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              FHE is the only privacy technology that supports <strong>server-side computation on encrypted data</strong>.
+              ZK proofs can verify claims about hidden values but cannot compute new results from them.
+              MPC requires synchronized participation from all parties. FHE allows any member to deposit at any time,
+              while the contract computes sums, minimums, and comparisons on ciphertext — asynchronously and permanently private.
+            </p>
+          </Section>
+
           {/* ── ACCESS CONTROL ── */}
           <Section id="access" eyebrow="Security" title="Access control model">
             <p>
@@ -267,6 +313,28 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Section>
+
+          {/* ── THREAT MODEL ── */}
+          <Section id="threats" eyebrow="Threat Model" title="What KURA protects against">
+            <div className="space-y-4">
+              {[
+                { threat: "Curious admin reads contributions", mitigation: "Contributions stored as euint64 handles. Admin sees participation count only — never amounts. FHE.allow() scopes each handle to its owner." },
+                { threat: "Block explorer exposes bids", mitigation: "Bids are encrypted calldata — Etherscan sees InEuint64 structs (ciphertext + proof), not plaintext values." },
+                { threat: "Losing bidder's amount leaked", mitigation: "Only the winning bid is published via decryptForTx + publishDecryptResult. Losing bids remain as encrypted handles forever." },
+                { threat: "DeFi lender learns exact credit score", mitigation: "verifyCreditworthiness uses double-blind FHE.gte() — returns ebool only. Neither score nor threshold is ever revealed to either party." },
+                { threat: "Front-running sealed-bid auction", mitigation: "Bids are encrypted client-side before submission. Validators process ciphertext — they cannot read bid values to front-run." },
+                { threat: "Replay of encrypted values", mitigation: "Each FHE input includes a unique proof bound to the sender. Replaying another member's ciphertext fails proof verification." },
+              ].map(({ threat, mitigation }) => (
+                <div key={threat} className="rounded-xl border border-border/50 bg-card/30 p-4">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-orange-400" />
+                    {threat}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{mitigation}</p>
+                </div>
+              ))}
             </div>
           </Section>
 

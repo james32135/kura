@@ -11,6 +11,7 @@ tasks/update-bid-abi.cjs
 # ── Docs (only README.md is tracked) ─────────────────────────────────────────
 *.md
 !README.md
+!about.md
 
 # ── Hardhat / Solidity build outputs ─────────────────────────────────────────
 node_modules/
