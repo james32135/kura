@@ -13,6 +13,7 @@ import { Route as DocsRouteImport } from './routes/docs'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppCreditRouteImport } from './routes/app.credit'
 import { Route as AppContributeRouteImport } from './routes/app.contribute'
 import { Route as AppCirclesRouteImport } from './routes/app.circles'
@@ -37,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOnboardingRoute = AppOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCreditRoute = AppCreditRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
+  '/app/onboarding': typeof AppOnboardingRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
+  '/app/onboarding': typeof AppOnboardingRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
+  '/app/onboarding': typeof AppOnboardingRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
+    | '/app/onboarding'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
+    | '/app/onboarding'
     | '/app'
   id:
     | '__root__'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
+    | '/app/onboarding'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -167,6 +179,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/onboarding': {
+      id: '/app/onboarding'
+      path: '/onboarding'
+      fullPath: '/app/onboarding'
+      preLoaderRoute: typeof AppOnboardingRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/credit': {
@@ -213,6 +232,7 @@ interface AppRouteChildren {
   AppCirclesRoute: typeof AppCirclesRoute
   AppContributeRoute: typeof AppContributeRoute
   AppCreditRoute: typeof AppCreditRoute
+  AppOnboardingRoute: typeof AppOnboardingRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -222,6 +242,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCirclesRoute: AppCirclesRoute,
   AppContributeRoute: AppContributeRoute,
   AppCreditRoute: AppCreditRoute,
+  AppOnboardingRoute: AppOnboardingRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

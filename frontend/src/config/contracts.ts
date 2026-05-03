@@ -319,6 +319,11 @@ export const KURA_CIRCLE_ABI = [
         "internalType": "struct InEuint64",
         "name": "_encMinContribution",
         "type": "tuple"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_minCreditTier",
+        "type": "uint8"
       }
     ],
     "name": "createCircle",

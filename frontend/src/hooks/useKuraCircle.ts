@@ -67,7 +67,7 @@ export function useKuraCircle(circleId: bigint = 0n) {
   });
 
   const createCircle = useCallback(
-    async (maxMembers: number, roundDuration: number, totalRounds: number, minContribution: bigint) => {
+    async (maxMembers: number, roundDuration: number, totalRounds: number, minContribution: bigint, minCreditTier: number = 0) => {
       if (!publicClient || !walletClient) throw new Error("Wallet not connected");
       setLoading(true);
       setStep("Encrypting minimum contribution...");
@@ -79,7 +79,7 @@ export function useKuraCircle(circleId: bigint = 0n) {
           address: KURA_CIRCLE_ADDRESS,
           abi: KURA_CIRCLE_ABI,
           functionName: "createCircle",
-          args: [BigInt(maxMembers), BigInt(roundDuration), BigInt(totalRounds), encrypted],
+          args: [BigInt(maxMembers), BigInt(roundDuration), BigInt(totalRounds), encrypted, minCreditTier],
           gas: 5_000_000n,
           ...fees,
         });

@@ -158,12 +158,21 @@ function AppLayoutInner() {
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="p-6 md:p-10 max-w-6xl mx-auto"
+            className="p-6 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10"
           >
             <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Mobile bottom navigation bar */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-surface/80 backdrop-blur-xl">
+        <div className="flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
+          {visibleNav.slice(0, 5).map((n) => (
+            <MobileNavItem key={n.to} item={n} loc={loc} />
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
@@ -182,6 +191,31 @@ function NavItem({ item, loc, mobile }: { item: NavEntry; loc: ReturnType<typeof
       <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
       <span className="flex-1">{item.label}</span>
       {active && !mobile && <span className="text-[9px] font-mono text-primary opacity-70">●</span>}
+    </Link>
+  );
+}
+
+function MobileNavItem({ item, loc }: { item: NavEntry; loc: ReturnType<typeof useLocation> }) {
+  const active = item.exact ? loc.pathname === item.to : loc.pathname.startsWith(item.to);
+  return (
+    <Link
+      to={item.to}
+      activeOptions={{ exact: item.exact }}
+      className="flex flex-col items-center gap-1 px-3 py-1.5 min-w-[52px] rounded-xl transition"
+    >
+      <div className={`relative flex items-center justify-center h-9 w-9 rounded-xl transition ${active ? "bg-primary/15" : "bg-transparent"}`}>
+        {active && (
+          <motion.div
+            layoutId="mobile-nav-active"
+            className="absolute inset-0 rounded-xl bg-primary/15"
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+          />
+        )}
+        <item.icon className={`h-5 w-5 relative z-10 ${active ? "text-primary" : "text-muted-foreground"}`} />
+      </div>
+      <span className={`text-[10px] font-medium tracking-wide ${active ? "text-primary" : "text-muted-foreground"}`}>
+        {item.label.split(" ")[0]}
+      </span>
     </Link>
   );
 }

@@ -31,6 +31,7 @@ function MyCirclesPage() {
   const [roundDur, setRoundDur] = useState("604800");
   const [rounds, setRounds] = useState("5");
   const [minContrib, setMinContrib] = useState("10");
+  const [minTier, setMinTier] = useState<number>(0);
   const [createMsg, setCreateMsg] = useState<string | null>(null);
   const [createErr, setCreateErr] = useState<string | null>(null);
 
@@ -48,7 +49,7 @@ function MyCirclesPage() {
     setCreateMsg(null);
     try {
       const minRaw = parseUnits(minContrib, 6); // cUSDC has 6 decimals
-      await createCircle(Number(maxMem), Number(roundDur), Number(rounds), minRaw);
+      await createCircle(Number(maxMem), Number(roundDur), Number(rounds), minRaw, minTier);
       setCreateMsg("Circle created! Refreshing your list…");
       setTimeout(() => refetchMyCircles(), 2000);
     } catch (e: any) {
@@ -223,6 +224,38 @@ function MyCirclesPage() {
             type="text"
             hint="Encrypted on-chain"
           />
+        </div>
+        {/* Reputation gate selector */}
+        <div className="mt-3">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Minimum Reputation Tier</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: "🌐 Open", value: 0, desc: "Anyone can join" },
+              { label: "🥉 Bronze+", value: 1, desc: "5+ points" },
+              { label: "🥈 Silver+", value: 2, desc: "15+ points" },
+              { label: "🥇 Gold+", value: 3, desc: "30+ points" },
+              { label: "💎 Diamond+", value: 4, desc: "50+ points" },
+            ].map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setMinTier(t.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition ${
+                  minTier === t.value
+                    ? "border-primary/60 bg-primary/15 text-primary"
+                    : "border-border/60 bg-background/30 text-muted-foreground hover:border-border"
+                }`}
+                title={t.desc}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {minTier > 0 && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              Only members with sufficient reputation can join. Checked on-chain when they join — no score is revealed.
+            </p>
+          )}
         </div>
         <button
           onClick={handleCreate}

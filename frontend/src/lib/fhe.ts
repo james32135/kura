@@ -54,7 +54,8 @@ export async function getFheClient(
       supportedChains: [arbSepolia],
     });
     const c = createCofheClient(config);
-    await c.connect(publicClient, walletClient);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await c.connect(publicClient as any, walletClient as any);
     client = c;
     connectedAccount = currentAccount;
     return c;

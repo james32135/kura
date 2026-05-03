@@ -154,4 +154,15 @@ contract KuraCredit {
     function getContributionCount(address _member) external view returns (uint256) {
         return contributionCount[_member];
     }
+
+    /// @notice Return the plaintext tier index for a member (used by KuraCircle reputation gate).
+    /// 0=None, 1=Bronze, 2=Silver, 3=Gold, 4=Diamond
+    function getMemberTier(address _member) external view returns (uint8) {
+        uint256 score = contributionCount[_member] + (circlesCompleted[_member] * 5);
+        if (score >= TIER_DIAMOND) return 4;
+        if (score >= TIER_GOLD) return 3;
+        if (score >= TIER_SILVER) return 2;
+        if (score >= TIER_BRONZE) return 1;
+        return 0;
+    }
 }

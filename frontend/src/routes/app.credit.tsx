@@ -11,11 +11,15 @@ import {
   Award,
   TrendingUp,
   Layers,
+  Hash,
 } from "lucide-react";
 import { AppHeader, StatCard, EncryptedValue, ProgressStepper } from "@/components/app/AppPrimitives";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { useKuraCredit, CREDIT_TIERS } from "@/hooks/useKuraCredit";
 import { useMyCircles } from "@/hooks/useMyCircles";
+import { useCircle } from "@/context/CircleContext";
+import { decryptForView } from "@/lib/fhe";
+import { useReadContract } from "wagmi";
 
 export const Route = createFileRoute("/app/credit")({
   component: CreditPage,
@@ -46,6 +50,9 @@ function ScoringDiagram() {
 function CreditPage() {
   const { address } = useAccount();
   const { circles: myCircles } = useMyCircles();
+  const { selectedCircleId } = useCircle();
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
   const {
     contributionCount,
     circlesCompleted,
@@ -62,6 +69,9 @@ function CreditPage() {
   const [decryptStage, setDecryptStage] = useState(-1);
   const [verifyAddr, setVerifyAddr] = useState("");
   const [verifyThreshold, setVerifyThreshold] = useState("");
+  const [roundPos, setRoundPos] = useState<string | null>(null);
+  const [roundPosLoading, setRoundPosLoading] = useState(false);
+  const [roundPosStep, setRoundPosStep] = useState("");
 
   const DECRYPT_STEPS = ["Requesting permission", "Reading encrypted score", "Decrypting privately", "Done"];
 
@@ -79,6 +89,45 @@ function CreditPage() {
       setDecryptStage(-1);
     }
   }, [getMyScore]);
+
+  // Round order position reveal — reads euint8 handle then decrypts locally
+  const ROUND_ORDER_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`; // updated on redeploy
+  const ROUND_ORDER_ABI = [
+    { name: "getMyPositionHandle", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "bytes32" }] },
+    { name: "orderAssigned", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "bool" }] },
+  ] as const;
+
+  const { data: orderAssigned } = useReadContract({
+    address: ROUND_ORDER_ADDRESS,
+    abi: ROUND_ORDER_ABI,
+    functionName: "orderAssigned",
+    args: [selectedCircleId],
+    query: { enabled: ROUND_ORDER_ADDRESS !== "0x0000000000000000000000000000000000000000" },
+  });
+
+  const handleRevealRoundPosition = useCallback(async () => {
+    if (!publicClient || !walletClient || !address) return;
+    setRoundPosLoading(true);
+    setRoundPosStep("Reading position handle...");
+    try {
+      const handle = await publicClient.readContract({
+        address: ROUND_ORDER_ADDRESS,
+        abi: ROUND_ORDER_ABI,
+        functionName: "getMyPositionHandle",
+        args: [selectedCircleId],
+        account: address,
+      }) as `0x${string}`;
+      setRoundPosStep("Decrypting position privately...");
+      const pos = await decryptForView(publicClient, walletClient, handle, setRoundPosStep);
+      setRoundPos(String(Number(pos)));
+      setRoundPosStep("Revealed!");
+    } catch (e) {
+      console.error(e);
+      setRoundPosStep("Failed to reveal");
+    } finally {
+      setRoundPosLoading(false);
+    }
+  }, [publicClient, walletClient, address, selectedCircleId]);
 
   const handleVerify = useCallback(async () => {
     if (!verifyAddr || !verifyThreshold) return;
@@ -149,6 +198,41 @@ function CreditPage() {
         </div>
         {decryptStage >= 0 && decryptStage < 3 && <ProgressStepper stage={decryptStage} steps={DECRYPT_STEPS} />}
       </div>
+
+      {/* Round Position Reveal — encrypted fair ordering */}
+      {orderAssigned && (
+        <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-card/80 to-card/40 p-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <Hash className="h-3 w-3" /> Your Payout Round Position
+              </p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">Assigned by encrypted randomness — no one chose this for you</p>
+            </div>
+            {roundPos === null ? (
+              <button
+                onClick={handleRevealRoundPosition}
+                disabled={roundPosLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 text-sm text-primary hover:bg-primary/10 transition disabled:opacity-50"
+              >
+                {roundPosLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                {roundPosLoading ? roundPosStep || "Decrypting..." : "Reveal My Turn"}
+              </button>
+            ) : (
+              <div className="text-right">
+                <p className="font-display text-3xl tabular-nums text-primary">#{roundPos}</p>
+                <p className="text-[10px] text-muted-foreground">your payout round</p>
+              </div>
+            )}
+          </div>
+          {roundPosLoading && <ProgressStepper stage={0} steps={["Reading handle", "Decrypting position", "Done"]} />}
+          <div className="rounded-xl border border-border/40 bg-background/30 px-4 py-3">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <span className="text-primary font-semibold">How this works:</span> When the circle was created, every member received an encrypted position number using <span className="font-mono text-xs">FHE.randomCiphertext()</span>. Only you can see your position — others cannot see when you're due to receive the pool.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tier roadmap */}
       <div className="rounded-2xl border border-border/60 bg-card/60 p-6 space-y-4">

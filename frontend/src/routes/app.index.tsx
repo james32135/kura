@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import {
   Users,
@@ -51,6 +51,15 @@ function HowItWorksDiagram() {
 function DashboardPage() {
   const { address } = useAccount();
   const { selectedCircleId } = useCircle();
+  const navigate = useNavigate();
+
+  // First-time visitor redirect to onboarding
+  useEffect(() => {
+    const done = localStorage.getItem("kura_onboarded");
+    if (!done) {
+      navigate({ to: "/app/onboarding" });
+    }
+  }, [navigate]);
   const {
     circleInfo,
     members,

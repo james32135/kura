@@ -17,6 +17,15 @@ interface IFHERC20 {
 interface IKuraCredit {
     function recordContribution(address _member) external;
     function recordCircleCompletion(address _member) external;
+    /// @notice Returns the current tier for a member (0=None,1=Bronze,2=Silver,3=Gold,4=Diamond).
+    function getMemberTier(address _member) external view returns (uint8);
+}
+
+/// @notice Interface to KuraRoundOrder for encrypted fair payout ordering.
+interface IKuraRoundOrder {
+    function registerMember(uint256 circleId, address member) external;
+    function assignOrder(uint256 circleId) external;
+    function orderAssigned(uint256 circleId) external view returns (bool);
 }
 
 contract KuraCircle {
@@ -32,6 +41,8 @@ contract KuraCircle {
         euint64 encPoolBalance;
         bool active;
         bool completed;
+        /// @dev Minimum credit tier required to join (0 = open, 1 = Bronze+, etc.)
+        uint8 minCreditTier;
     }
 
     uint256 public circleCount;
@@ -46,29 +57,37 @@ contract KuraCircle {
 
     IKuraCredit public kuraCredit;
     IFHERC20 public paymentToken; // ConfidentialUSDC (cUSDC)
+    IKuraRoundOrder public roundOrder; // Encrypted fair payout ordering
 
     // Reusable encrypted zero constant — gas optimization
     euint64 private encZero;
 
     event CircleCreated(uint256 indexed circleId, address admin, uint256 maxMembers, uint256 totalRounds);
+    event ReputationGated(uint256 indexed circleId, uint8 minTier);
     event MemberJoined(uint256 indexed circleId, address member);
     event ContributionMade(uint256 indexed circleId, address member, uint256 round);
     event RoundStarted(uint256 indexed circleId, uint256 round, uint256 deadline);
     event PoolPayout(uint256 indexed circleId, uint256 round, address winner);
     event CircleCompleted(uint256 indexed circleId);
 
-    constructor(address _kuraCredit, address _paymentToken) {
+    constructor(address _kuraCredit, address _paymentToken, address _roundOrder) {
         kuraCredit = IKuraCredit(_kuraCredit);
         paymentToken = IFHERC20(_paymentToken);
+        roundOrder = IKuraRoundOrder(_roundOrder);
         encZero = FHE.asEuint64(uint64(0));
         FHE.allowThis(encZero);
     }
 
+    /// @notice Create a new savings circle.
+    /// @param _minCreditTier  Minimum reputation tier required to join (0 = open access).
+    ///                        1=Bronze, 2=Silver, 3=Gold, 4=Diamond.
+    ///                        Tier check is done plaintext for now (FHE comparison in v4).
     function createCircle(
         uint256 _maxMembers,
         uint256 _roundDuration,
         uint256 _totalRounds,
-        InEuint64 calldata _encMinContribution
+        InEuint64 calldata _encMinContribution,
+        uint8 _minCreditTier
     ) external returns (uint256) {
         uint256 id = circleCount++;
         Circle storage c = circles[id];
@@ -86,12 +105,20 @@ contract KuraCircle {
         FHE.allowThis(c.encPoolBalance);
         FHE.allow(c.encPoolBalance, msg.sender);
 
-        // Admin auto-joins
+        // Store reputation gate tier
+        require(_minCreditTier <= 4, "Invalid tier");
+        c.minCreditTier = _minCreditTier;
+
+        // Admin auto-joins (admin is exempt from tier gate)
         circleMembers[id].push(msg.sender);
         isMember[id][msg.sender] = true;
         c.memberCount = 1;
 
+        // Register admin in round ordering system
+        roundOrder.registerMember(id, msg.sender);
+
         emit CircleCreated(id, msg.sender, _maxMembers, _totalRounds);
+        if (_minCreditTier > 0) emit ReputationGated(id, _minCreditTier);
         return id;
     }
 
@@ -101,11 +128,25 @@ contract KuraCircle {
         require(!isMember[_circleId][msg.sender], "Already member");
         require(c.memberCount < c.maxMembers, "Circle full");
 
+        // Reputation gate: check member's tier is at least minCreditTier
+        if (c.minCreditTier > 0) {
+            uint8 memberTier = kuraCredit.getMemberTier(msg.sender);
+            require(memberTier >= c.minCreditTier, "Reputation tier too low");
+        }
+
         circleMembers[_circleId].push(msg.sender);
         isMember[_circleId][msg.sender] = true;
         c.memberCount++;
 
+        // Register member in fair ordering system
+        roundOrder.registerMember(_circleId, msg.sender);
+
         emit MemberJoined(_circleId, msg.sender);
+    }
+
+    /// @notice Expose circle's minimum credit tier requirement.
+    function getMinCreditTier(uint256 _circleId) external view returns (uint8) {
+        return circles[_circleId].minCreditTier;
     }
 
     function startRound(uint256 _circleId) external {

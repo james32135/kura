@@ -10,6 +10,8 @@ import {
   Info,
   ArrowRight,
   Wallet,
+  CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { AppHeader, StatCard, EncryptedValue, ProgressStepper } from "@/components/app/AppPrimitives";
 import { useAccount } from "wagmi";
@@ -86,6 +88,7 @@ function ContributePage() {
   const [myContrib, setMyContrib] = useState<string | null>(null);
   const [decryptStage, setDecryptStage] = useState(-1);
   const [error, setError] = useState("");
+  const [showTransak, setShowTransak] = useState(false);
 
   const DECRYPT_STEPS = ["Requesting permission", "Reading encrypted data", "Decrypting privately", "Done"];
 
@@ -216,6 +219,45 @@ function ContributePage() {
           )}
 
           {decryptStage >= 0 && decryptStage < 3 && <ProgressStepper stage={decryptStage} steps={DECRYPT_STEPS} />}
+        </div>
+      )}
+
+      {/* Fiat on-ramp — buy USDC with card/bank if wallet is empty */}
+      {isMember && !alreadyContributed && circleActive && (
+        <div className="rounded-2xl border border-border/60 bg-card/60 p-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">No USDC? Buy with card or bank transfer</p>
+              <p className="text-xs text-muted-foreground">170+ countries · real-time KYC · Arbitrum network</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowTransak(true)}
+            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 text-sm text-primary hover:bg-primary/10 transition"
+          >
+            Buy USDC <ExternalLink className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Transak widget modal */}
+      {showTransak && address && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl">
+            <button
+              onClick={() => setShowTransak(false)}
+              className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-background/80 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition text-xs"
+            >
+              ✕
+            </button>
+            <iframe
+              src={`https://global.transak.com/?apiKey=f37d60c6-a68c-4cf9-8a6c-8e65a7f58cf2&cryptoCurrencyCode=USDC&network=arbitrum&walletAddress=${address}&defaultFiatAmount=50&themeColor=5a8aff&exchangeScreenTitle=Buy+USDC+for+KURA`}
+              title="Buy USDC with Transak"
+              className="w-full h-[620px] border-0"
+              allow="camera;microphone;payment"
+            />
+          </div>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
-import { motion } from "framer-motion";
-import { Check, Clock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Clock, Lock, Eye, Cpu, Zap } from "lucide-react";
 
 export function AppHeader({
   eyebrow,
@@ -103,6 +103,9 @@ export function EncryptedValue({ label, value }: { label: string; value: string 
 
 const STEPS_DEFAULT = ["Encrypting in browser", "Submitting to blockchain", "Verifying minimum", "Recorded"];
 
+// FHE step icons: Lock=encrypting, Cpu=computing, Eye=decrypting, Zap=done
+const FHE_ICONS = [Lock, Cpu, Eye, Zap];
+
 export function ProgressStepper({
   stage,
   steps = STEPS_DEFAULT,
@@ -111,37 +114,61 @@ export function ProgressStepper({
   steps?: string[];
 }) {
   return (
-    <ol className="space-y-2">
+    <ol className="space-y-2.5">
       {steps.map((label, i) => {
         const done = i < stage;
         const active = i === stage;
+        const StepIcon = FHE_ICONS[i % FHE_ICONS.length];
         return (
-          <li key={label} className="flex items-center gap-3 text-xs font-mono">
-            <span
-              className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] ${
-                done
-                  ? "bg-primary text-background"
-                  : active
-                    ? "border border-primary text-primary"
-                    : "border border-border text-muted-foreground"
-              }`}
-            >
-              {done ? "✓" : i + 1}
-            </span>
-            <span className={done || active ? "text-foreground" : "text-muted-foreground"}>
+          <motion.li
+            key={label}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05, duration: 0.25 }}
+            className="flex items-center gap-3 text-xs font-mono"
+          >
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={done ? "done" : active ? "active" : "idle"}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.6, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${
+                  done
+                    ? "bg-primary text-background"
+                    : active
+                      ? "border border-primary text-primary bg-primary/10"
+                      : "border border-border/60 text-muted-foreground/40"
+                }`}
+              >
+                {done ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <StepIcon className={`h-3 w-3 ${active ? "animate-pulse" : ""}`} />
+                )}
+              </motion.span>
+            </AnimatePresence>
+
+            <span className={`flex-1 ${done || active ? "text-foreground" : "text-muted-foreground/50"}`}>
               {label}
             </span>
+
             {active && (
-              <span className="ml-auto inline-block h-1 w-12 rounded-full overflow-hidden bg-border">
+              <span className="inline-block h-1 w-16 rounded-full overflow-hidden bg-border/60">
                 <motion.span
-                  className="block h-full bg-primary"
-                  initial={{ width: 0 }}
+                  className="block h-full bg-primary rounded-full"
+                  initial={{ width: "0%" }}
                   animate={{ width: "100%" }}
-                  transition={{ duration: 0.9 }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
                 />
               </span>
             )}
-          </li>
+
+            {done && (
+              <span className="text-[10px] font-mono text-primary/60">done</span>
+            )}
+          </motion.li>
         );
       })}
     </ol>
