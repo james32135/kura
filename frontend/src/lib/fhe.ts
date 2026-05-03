@@ -1,6 +1,4 @@
-import { createCofheClient, createCofheConfig } from "@cofhe/sdk/web";
-import { Encryptable, FheTypes, type CofheClient } from "@cofhe/sdk";
-import { arbSepolia } from "@cofhe/sdk/chains";
+import type { CofheClient } from "@cofhe/sdk";
 import type { PublicClient, WalletClient } from "viem";
 
 let client: CofheClient | null = null;
@@ -50,6 +48,8 @@ export async function getFheClient(
   if (connectPromise) return connectPromise;
 
   connectPromise = (async () => {
+    const { createCofheClient, createCofheConfig } = await import("@cofhe/sdk/web");
+    const { arbSepolia } = await import("@cofhe/sdk/chains");
     const config = createCofheConfig({
       supportedChains: [arbSepolia],
     });
@@ -76,6 +76,7 @@ export async function encryptUint64(
   onStep?: (step: string) => void
 ) {
   const c = await getFheClient(publicClient, walletClient);
+  const { Encryptable } = await import("@cofhe/sdk");
   onStep?.("Initializing FHE");
   const result = await c
     .encryptInputs([Encryptable.uint64(value)])
@@ -92,6 +93,7 @@ export async function decryptForView(
   onStep?: (step: string) => void
 ) {
   const c = await getFheClient(publicClient, walletClient);
+  const { FheTypes } = await import("@cofhe/sdk");
   const handle = typeof ctHash === "string" ? BigInt(ctHash) : ctHash;
   console.log("[fhe] decryptForView handle:", handle.toString(), "hex:", handle.toString(16).padStart(64, "0"));
 
