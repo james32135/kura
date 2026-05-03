@@ -8,6 +8,7 @@ contract KuraRoundOrder {
     uint8 public constant MAX_MEMBERS = 200;
     mapping(uint256 => mapping(address => euint8)) private _positions;
     mapping(uint256 => mapping(address => bool)) private _assigned;
+    mapping(uint256 => mapping(address => bool)) private _registered;
     mapping(uint256 => address[]) private _members;
     mapping(uint256 => bool) public orderAssigned;
     address public immutable kuraCircle;
@@ -21,8 +22,9 @@ contract KuraRoundOrder {
     }
     function registerMember(uint256 circleId, address member) external onlyKuraCircle {
         require(!orderAssigned[circleId], "Order already assigned");
-        require(!_assigned[circleId][member], "Already registered");
+        require(!_registered[circleId][member], "Already registered");
         require(_members[circleId].length < MAX_MEMBERS, "Circle too large");
+        _registered[circleId][member] = true;
         _members[circleId].push(member);
     }
     function assignOrder(uint256 circleId) external onlyKuraCircle {

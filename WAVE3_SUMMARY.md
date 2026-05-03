@@ -205,17 +205,18 @@ Full section added to `app.credit.tsx`:
 
 ## Deployed Contracts (Arbitrum Sepolia)
 
-| Contract | Address |
-|----------|---------|
-| KuraCircle | `0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047` |
-| KuraBid | `0x5195ED6bB28293080A430F1bE2f3965F0d8ad083` |
-| KuraCredit | `0x26b1ea9Bb8Aa33086Fa5b4D32EA89b2Da6DD4B14` |
-| KuraConditionResolver | `0x2aa7CC7BeCBc274cfe7Fef0F38034623c3bDEa7b` |
-| KuraEscrowAdapter | `0xd36De25daeE4Dc1D54c530FE25aD03a195FDf642` |
-| cUSDC (test token) | `0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f` |
-| **KuraRoundOrder** | **To be deployed** (Wave 3 — requires updated KuraCircle deploy with 3-arg constructor) |
+All 6 contracts deployed and live on Arbitrum Sepolia (chainId 421614). Explorer: https://sepolia.arbiscan.io
 
-> **Note:** KuraRoundOrder and the updated KuraCircle (with `roundOrder` + `minCreditTier`) need to be redeployed together. The constructor of KuraCircle now requires `(kuraCredit, paymentToken, roundOrder)`. KuraRoundOrder requires `(kuraCircle)` — deploy KuraRoundOrder first with a temporary address, then deploy KuraCircle pointing to it, then update KuraRoundOrder's kuraCircle reference, or deploy in the correct order using a deployer script.
+| Contract | Address | Arbiscan |
+|----------|---------|---------|
+| KuraCredit | `0x350AAB21f7644399235D8176E4ac8aB2CB58448b` | [view](https://sepolia.arbiscan.io/address/0x350AAB21f7644399235D8176E4ac8aB2CB58448b) |
+| KuraCircle | `0xBAb80eb01777A0AD6d84FB378F385871bcAC3d5a` | [view](https://sepolia.arbiscan.io/address/0xBAb80eb01777A0AD6d84FB378F385871bcAC3d5a) |
+| **KuraRoundOrder** | **`0x7Be337472D64b387d6f34c530A8a1aa1Ce7DDd41`** | [view](https://sepolia.arbiscan.io/address/0x7Be337472D64b387d6f34c530A8a1aa1Ce7DDd41) |
+| KuraBid | `0xF0E7D30C9fE9FD2471459a32F231CD286938b970` | [view](https://sepolia.arbiscan.io/address/0xF0E7D30C9fE9FD2471459a32F231CD286938b970) |
+| KuraConditionResolver | `0x98244dCcbb5b8EE849c39548521006D474772EE8` | [view](https://sepolia.arbiscan.io/address/0x98244dCcbb5b8EE849c39548521006D474772EE8) |
+| KuraEscrowAdapter | `0x7c2cb7551ff3365A96E5344891f047378B7f1A61` | [view](https://sepolia.arbiscan.io/address/0x7c2cb7551ff3365A96E5344891f047378B7f1A61) |
+| cUSDC (test token) | `0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f` | [view](https://sepolia.arbiscan.io/address/0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f) |
+| ConfidentialEscrow | `0xC4333F84F5034D8691CB95f068def2e3B6DC60Fa` | [view](https://sepolia.arbiscan.io/address/0xC4333F84F5034D8691CB95f068def2e3B6DC60Fa) |
 
 ---
 
@@ -353,10 +354,10 @@ No other buildathon team has:
 
 ### What Could Be Stronger
 
-1. **KuraRoundOrder not yet deployed** — the frontend card is wired but the contract needs to go on-chain. This is the most critical gap.
-2. **No automated tests** — Hardhat test suite for KuraRoundOrder + the reputation gate would strengthen the submission.
-3. **Frontend loads KuraCredit tier from events**, not a live hook — could be smoother.
-4. **Transak uses a non-production API key** — swap for production key before mainnet.
+1. **Automated test suite** — Hardhat tests for KuraRoundOrder + reputation gate revert cases would strengthen the submission further.
+2. **Frontend loads KuraCredit tier from events**, not a live hook — could be smoother with a real-time read.
+3. **Transak uses a test API key** — swap for production key before mainnet.
+4. **Multi-language UI** — Yoruba, Hindi, Spanish for core ROSCA demographic (post-launch).
 
 ---
 
@@ -406,8 +407,8 @@ Zero TypeScript errors. Zero build errors.
 
 ## Next Steps (Post-Wave 3)
 
-1. **Deploy KuraRoundOrder + updated KuraCircle** — update `KURA_CIRCLE_ADDRESS` in `contracts.ts` + fill in `KURA_ROUND_ORDER_ADDRESS` in `app.credit.tsx`
-2. **Wire `assignOrder` into `startRound`** — admin calls it once automatically when the first round starts
-3. **Automated test suite** — Hardhat tests for reputation gate revert cases + FHE mock decryption
-4. **Gasless relay** — abstract the encryption gas cost using a relayer
-5. **Multi-language UI** — target Yoruba, Hindi, Spanish for the core demographic
+1. **Wire `assignOrder` into `startRound`** — admin calls it once automatically when the first round starts
+2. **Automated test suite** — Hardhat tests for reputation gate revert cases + FHE mock decryption
+3. **Gasless relay** — abstract the encryption gas cost using a relayer
+4. **Multi-language UI** — target Yoruba, Hindi, Spanish for the core demographic
+5. **Mainnet migration** — swap Transak test key for production, adjust USDC address
