@@ -20,6 +20,7 @@ import { useMyCircles } from "@/hooks/useMyCircles";
 import { useCircle } from "@/context/CircleContext";
 import { decryptForView } from "@/lib/fhe";
 import { useReadContract } from "wagmi";
+import { KURA_ROUND_ORDER_ADDRESS, KURA_ROUND_ORDER_ABI } from "@/config/contracts";
 
 export const Route = createFileRoute("/app/credit")({
   component: CreditPage,
@@ -91,7 +92,7 @@ function CreditPage() {
   }, [getMyScore]);
 
   // Round order position reveal — reads euint8 handle then decrypts locally
-  const ROUND_ORDER_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`; // updated on redeploy
+  const ROUND_ORDER_ADDRESS = KURA_ROUND_ORDER_ADDRESS;
   const ROUND_ORDER_ABI = [
     { name: "getMyPositionHandle", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "bytes32" }] },
     { name: "orderAssigned", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "bool" }] },
@@ -102,7 +103,7 @@ function CreditPage() {
     abi: ROUND_ORDER_ABI,
     functionName: "orderAssigned",
     args: [selectedCircleId],
-    query: { enabled: ROUND_ORDER_ADDRESS !== "0x0000000000000000000000000000000000000000" },
+    query: { enabled: !!selectedCircleId },
   });
 
   const handleRevealRoundPosition = useCallback(async () => {

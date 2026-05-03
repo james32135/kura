@@ -58,6 +58,7 @@ contract KuraCircle {
     IKuraCredit public kuraCredit;
     IFHERC20 public paymentToken; // ConfidentialUSDC (cUSDC)
     IKuraRoundOrder public roundOrder; // Encrypted fair payout ordering
+    address public owner;
 
     // Reusable encrypted zero constant — gas optimization
     euint64 private encZero;
@@ -76,6 +77,18 @@ contract KuraCircle {
         roundOrder = IKuraRoundOrder(_roundOrder);
         encZero = FHE.asEuint64(uint64(0));
         FHE.allowThis(encZero);
+        owner = msg.sender;
+    }
+
+    /// @notice Admin can update the roundOrder contract address (used during initial deploy sequencing).
+    function setRoundOrder(address _roundOrder) external {
+        require(msg.sender == owner, "Only owner");
+        require(address(roundOrder) == address(0) || !anyCircleCreated(), "Cannot change after circles created");
+        roundOrder = IKuraRoundOrder(_roundOrder);
+    }
+
+    function anyCircleCreated() internal view returns (bool) {
+        return circleCount > 0;
     }
 
     /// @notice Create a new savings circle.
