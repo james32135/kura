@@ -441,6 +441,16 @@ function MarketValidation() {
     { k: "Privacy Gap", v: "Every existing solution exposes amounts. KURA is the first to encrypt everything on-chain." },
   ];
 
+  const compare = [
+    { feature: "Contribution amounts private", kura: true, others: false },
+    { feature: "Sealed-bid allocation", kura: true, others: false },
+    { feature: "Encrypted credit score", kura: true, others: false },
+    { feature: "FHE-provably fair ordering", kura: true, others: false },
+    { feature: "Reputation-gated membership", kura: true, others: false },
+    { feature: "Non-custodial on-chain", kura: true, others: "partial" },
+    { feature: "Open source & verified", kura: true, others: "partial" },
+  ];
+
   return (
     <section className="relative py-32 px-6">
       <div className="max-w-7xl mx-auto">
@@ -463,6 +473,51 @@ function MarketValidation() {
             </Reveal>
           ))}
         </div>
+
+        {/* Comparison table */}
+        <Reveal delay={0.1}>
+          <div className="mt-20">
+            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8 text-center">
+              KURA vs Every Other Savings Circle
+            </p>
+            <div className="overflow-x-auto rounded-2xl border border-border/60">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 bg-surface/50">
+                    <th className="text-left px-6 py-4 font-mono text-xs uppercase tracking-widest text-muted-foreground">Feature</th>
+                    <th className="px-6 py-4 font-display text-base font-semibold text-primary">KURA</th>
+                    <th className="px-6 py-4 font-display text-base font-semibold text-muted-foreground">Others</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compare.map((row, i) => (
+                    <tr key={row.feature} className={`border-b border-border/40 transition hover:bg-white/[0.02] ${i % 2 === 0 ? "bg-background/20" : ""}`}>
+                      <td className="px-6 py-3.5 text-muted-foreground">{row.feature}</td>
+                      <td className="px-6 py-3.5 text-center">
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/15 border border-primary/30">
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 text-center">
+                        {row.others === true ? (
+                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/15 border border-primary/30">
+                            <Check className="h-3.5 w-3.5 text-primary" />
+                          </span>
+                        ) : row.others === "partial" ? (
+                          <span className="text-xs text-muted-foreground border border-border/40 px-2 py-0.5 rounded-full">Partial</span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-destructive/10 border border-destructive/20">
+                            <X className="h-3.5 w-3.5 text-destructive/70" />
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -474,15 +529,15 @@ function Roadmap() {
   const waves = [
     {
       n: "Wave 2",
-      t: "Full Protocol — Live",
-      d: "All 6 contracts deployed on Arbitrum Sepolia: KuraCircle (encrypted contributions + pool), KuraBid v2 (sealed-bid with eaddress auto-detection), KuraCredit (5-tier encrypted scoring), KuraConditionResolver + KuraEscrowAdapter (ReineiraOS integration). One-click auto-settle, multi-circle support, production dApp with client-side FHE via @cofhe/sdk 0.4.",
+      t: "Full Protocol — Base",
+      d: "All 6 contracts deployed: KuraCircle (encrypted contributions + pool), KuraBid (sealed-bid with eaddress auto-detection), KuraCredit (5-tier encrypted scoring), KuraConditionResolver + KuraEscrowAdapter (ReineiraOS integration). Production dApp with client-side FHE.",
       status: "live",
     },
     {
       n: "Wave 3",
-      t: "Payment Rails + Mobile",
-      d: "Fiat on-ramp via Privara SDK, mobile-optimized UI, push notifications for round deadlines, and cross-circle reputation aggregation.",
-      status: "active",
+      t: "FHE SDK 0.5 + Fair Ordering — Live",
+      d: "CoFHE SDK 0.5.1 migration. Novel feature: FHE.randomCiphertext for provably-fair encrypted payout ordering — nobody can see or manipulate who gets paid next. Reputation-gated circles (check credit tier without revealing score). Guided onboarding, Transak fiat on-ramp, PWA. All 6 contracts redeployed + verified on Arbiscan. 39 tests passing.",
+      status: "live",
     },
     {
       n: "Wave 4",

@@ -17,6 +17,7 @@ import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppCreditRouteImport } from './routes/app.credit'
 import { Route as AppContributeRouteImport } from './routes/app.contribute'
 import { Route as AppCirclesRouteImport } from './routes/app.circles'
+import { Route as AppBrowseRouteImport } from './routes/app.browse'
 import { Route as AppBidRouteImport } from './routes/app.bid'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
@@ -60,6 +61,11 @@ const AppCirclesRoute = AppCirclesRouteImport.update({
   path: '/circles',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBrowseRoute = AppBrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBidRoute = AppBidRouteImport.update({
   id: '/bid',
   path: '/bid',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/app/admin': typeof AppAdminRoute
   '/app/bid': typeof AppBidRoute
+  '/app/browse': typeof AppBrowseRoute
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/app/admin': typeof AppAdminRoute
   '/app/bid': typeof AppBidRoute
+  '/app/browse': typeof AppBrowseRoute
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/app/admin': typeof AppAdminRoute
   '/app/bid': typeof AppBidRoute
+  '/app/browse': typeof AppBrowseRoute
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/app/admin'
     | '/app/bid'
+    | '/app/browse'
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/app/admin'
     | '/app/bid'
+    | '/app/browse'
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/app/admin'
     | '/app/bid'
+    | '/app/browse'
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
@@ -209,6 +221,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCirclesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/browse': {
+      id: '/app/browse'
+      path: '/browse'
+      fullPath: '/app/browse'
+      preLoaderRoute: typeof AppBrowseRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/bid': {
       id: '/app/bid'
       path: '/bid'
@@ -229,6 +248,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppBidRoute: typeof AppBidRoute
+  AppBrowseRoute: typeof AppBrowseRoute
   AppCirclesRoute: typeof AppCirclesRoute
   AppContributeRoute: typeof AppContributeRoute
   AppCreditRoute: typeof AppCreditRoute
@@ -239,6 +259,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppBidRoute: AppBidRoute,
+  AppBrowseRoute: AppBrowseRoute,
   AppCirclesRoute: AppCirclesRoute,
   AppContributeRoute: AppContributeRoute,
   AppCreditRoute: AppCreditRoute,

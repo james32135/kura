@@ -97,7 +97,7 @@ function Docs() {
               sealed-bid auctions with eaddress tracking, five-tier encrypted credit scoring, and ReineiraOS escrow integration.
             </p>
             <p>
-              Built on Fhenix CoFHE with <code>@cofhe/sdk 0.4</code>, deployed on
+              Built on Fhenix CoFHE with <code>@cofhe/sdk 0.5.1</code>, deployed on
               Arbitrum Sepolia (chain 421614). The frontend is a React 19 SPA using wagmi, viem,
               RainbowKit, and TanStack Router with client-side FHE encryption.
             </p>
@@ -111,7 +111,7 @@ function Docs() {
               through the CoFHE SDK. All FHE computation runs on Fhenix coprocessors — the EVM
               never sees plaintext.
             </p>
-            <pre className="rounded-xl bg-background/80 border border-border/60 p-5 font-mono text-xs leading-relaxed overflow-x-auto">{`Browser (CoFHE SDK · @cofhe/sdk 0.4)
+            <pre className="rounded-xl bg-background/80 border border-border/60 p-5 font-mono text-xs leading-relaxed overflow-x-auto">{`Browser (CoFHE SDK · @cofhe/sdk 0.5.1)
    │ encrypt(amount) → inEuint64 + proof
    ▼
 KuraCircle.sol  ──FHE.add──►  poolBalance: euint64
@@ -136,7 +136,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
 
             <ContractRef
               name="KuraCircle.sol"
-              address="0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047"
+              address="0x5B2DBDCC210Df55486BdBc7E1A16B1f8CF0673b7"
               fns={[
                 ["createCircle(maxMembers, roundDuration, totalRounds, InEuint64 minContrib)", "Create a new savings circle with encrypted minimum contribution"],
                 ["joinCircle(circleId)", "Join an existing circle as a member"],
@@ -151,7 +151,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
 
             <ContractRef
               name="KuraBid.sol v2"
-              address="0x5195ED6bB28293080A430F1bE2f3965F0d8ad083"
+              address="0x0179416EfeD421aB3582B2b4Cb238450d60A9Af1"
               fns={[
                 ["submitBid(circleId, roundId, InEuint64 encBid)", "Submit sealed discount bid — encrypted and compared via FHE.lte"],
                 ["closeRound(circleId, roundId)", "Close bidding, FHE.allowPublic on winner handle"],
@@ -163,7 +163,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
 
             <ContractRef
               name="KuraCredit.sol"
-              address="0x26b1ea9Bb8Aa33086Fa5b4D32EA89b2Da6DD4B14"
+              address="0xF6e42A0523373F6Ef89d91E925a4a93299b75144"
               fns={[
                 ["recordContribution(member)", "Increment encrypted credit score by 1 via FHE.add"],
                 ["recordCircleCompletion(member)", "Award +5 points for completing a full circle"],
@@ -175,7 +175,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
 
             <ContractRef
               name="KuraConditionResolver.sol"
-              address="0x2aa7CC7BeCBc274cfe7Fef0F38034623c3bDEa7b"
+              address="0xA35d76dbbe380a75777F93C6773A20f5ebAbA744"
               fns={[
                 ["verifyCondition(user, conditionData) → bool", "ReineiraOS IConditionResolver — gates escrow redemption on KURA credit tier"],
               ]}
@@ -375,10 +375,10 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
             <p>All contracts are deployed on Arbitrum Sepolia (chain ID 421614).</p>
             <div className="space-y-2 mt-4">
               {[
-                ["KuraCircle", "0x7224E14fFD2b49da0D7Bf375b17Df8894DA39047"],
-                ["KuraBid v2", "0x5195ED6bB28293080A430F1bE2f3965F0d8ad083"],
-                ["KuraCredit", "0x26b1ea9Bb8Aa33086Fa5b4D32EA89b2Da6DD4B14"],
-                ["KuraConditionResolver", "0x2aa7CC7BeCBc274cfe7Fef0F38034623c3bDEa7b"],
+                ["KuraCircle", "0x5B2DBDCC210Df55486BdBc7E1A16B1f8CF0673b7"],
+                ["KuraBid v2", "0x0179416EfeD421aB3582B2b4Cb238450d60A9Af1"],
+                ["KuraCredit", "0xF6e42A0523373F6Ef89d91E925a4a93299b75144"],
+                ["KuraConditionResolver", "0xA35d76dbbe380a75777F93C6773A20f5ebAbA744"],
                 ["cUSDC (ConfidentialUSDC)", "0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f"],
               ].map(([name, addr]) => (
                 <div key={name} className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-border/50 bg-card/30">
@@ -397,7 +397,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
             <div className="mt-6 rounded-xl border border-border/50 bg-card/30 p-4">
               <h4 className="text-sm font-semibold mb-2">Tech Stack</h4>
               <div className="flex flex-wrap gap-2">
-                {["Fhenix CoFHE", "@cofhe/sdk 0.4", "Solidity 0.8.25", "React 19", "TypeScript", "Vite 7", "wagmi 2.19", "viem 2.48", "RainbowKit", "TanStack Router", "Tailwind v4", "Framer Motion"].map((t) => (
+                {["Fhenix CoFHE", "@cofhe/sdk 0.5.1", "Solidity 0.8.25", "React 19", "TypeScript", "Vite 7", "wagmi 2.19", "viem 2.48", "RainbowKit", "TanStack Router", "Tailwind v4", "Framer Motion"].map((t) => (
                   <span key={t} className="px-2.5 py-1 rounded-full text-xs border border-border/50 bg-background/40 font-mono">{t}</span>
                 ))}
               </div>
@@ -538,3 +538,4 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     </div>
   );
 }
+

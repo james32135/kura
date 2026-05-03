@@ -11,6 +11,7 @@ import {
   Lock,
   HelpCircle,
   Layers,
+  Globe,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -43,6 +44,7 @@ interface NavEntry {
 const nav: NavEntry[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true, group: "Overview" },
   { to: "/app/circles", label: "My Circles", icon: Layers, exact: false, group: "Overview" },
+  { to: "/app/browse", label: "Browse Circles", icon: Globe, exact: false, group: "Overview" },
   { to: "/app/contribute", label: "Contribute", icon: CircleDollarSign, exact: false, group: "Circle" },
   { to: "/app/bid", label: "Bid for Pool", icon: Gavel, exact: false, group: "Circle" },
   { to: "/app/credit", label: "Reputation", icon: Shield, exact: false, group: "Circle" },

@@ -1,8 +1,11 @@
 # KURA Protocol — Wave 3 Buildathon Summary
 
-> Submission for the Fhenix CoFHE buildathon, Wave 3.
-> Repository: https://github.com/james32135/kura
-> Network: Arbitrum Sepolia (chainId 421614)
+> **Status: COMPLETE — Wave 3 Live on Arbitrum Sepolia**  
+> Submission for the Fhenix CoFHE buildathon, Wave 3.  
+> Repository: https://github.com/james32135/kura  
+> Network: Arbitrum Sepolia (chainId 421614)  
+> Test suite: **39 passing / 14 pending (FHE mock limitation) / 0 failing**  
+> All 6 contracts verified on [Arbiscan](https://sepolia.arbiscan.io)  
 
 ---
 
@@ -209,12 +212,12 @@ All 6 contracts deployed and live on Arbitrum Sepolia (chainId 421614). Explorer
 
 | Contract | Address | Arbiscan |
 |----------|---------|---------|
-| KuraCredit | `0x350AAB21f7644399235D8176E4ac8aB2CB58448b` | [view](https://sepolia.arbiscan.io/address/0x350AAB21f7644399235D8176E4ac8aB2CB58448b) |
-| KuraCircle | `0xBAb80eb01777A0AD6d84FB378F385871bcAC3d5a` | [view](https://sepolia.arbiscan.io/address/0xBAb80eb01777A0AD6d84FB378F385871bcAC3d5a) |
-| **KuraRoundOrder** | **`0x7Be337472D64b387d6f34c530A8a1aa1Ce7DDd41`** | [view](https://sepolia.arbiscan.io/address/0x7Be337472D64b387d6f34c530A8a1aa1Ce7DDd41) |
-| KuraBid | `0xF0E7D30C9fE9FD2471459a32F231CD286938b970` | [view](https://sepolia.arbiscan.io/address/0xF0E7D30C9fE9FD2471459a32F231CD286938b970) |
-| KuraConditionResolver | `0x98244dCcbb5b8EE849c39548521006D474772EE8` | [view](https://sepolia.arbiscan.io/address/0x98244dCcbb5b8EE849c39548521006D474772EE8) |
-| KuraEscrowAdapter | `0x7c2cb7551ff3365A96E5344891f047378B7f1A61` | [view](https://sepolia.arbiscan.io/address/0x7c2cb7551ff3365A96E5344891f047378B7f1A61) |
+| KuraCredit | `0xF6e42A0523373F6Ef89d91E925a4a93299b75144` | [view](https://sepolia.arbiscan.io/address/0xF6e42A0523373F6Ef89d91E925a4a93299b75144) |
+| KuraCircle | `0x5B2DBDCC210Df55486BdBc7E1A16B1f8CF0673b7` | [view](https://sepolia.arbiscan.io/address/0x5B2DBDCC210Df55486BdBc7E1A16B1f8CF0673b7) |
+| **KuraRoundOrder** | **`0x7204C03033ad8FfBAFfdE9313fd14cAF0Df7182a`** | [view](https://sepolia.arbiscan.io/address/0x7204C03033ad8FfBAFfdE9313fd14cAF0Df7182a) |
+| KuraBid | `0x0179416EfeD421aB3582B2b4Cb238450d60A9Af1` | [view](https://sepolia.arbiscan.io/address/0x0179416EfeD421aB3582B2b4Cb238450d60A9Af1) |
+| KuraConditionResolver | `0xA35d76dbbe380a75777F93C6773A20f5ebAbA744` | [view](https://sepolia.arbiscan.io/address/0xA35d76dbbe380a75777F93C6773A20f5ebAbA744) |
+| KuraEscrowAdapter | `0xaa9814c029302aA3d66C502D2210c456aC3c9aD8` | [view](https://sepolia.arbiscan.io/address/0xaa9814c029302aA3d66C502D2210c456aC3c9aD8) |
 | cUSDC (test token) | `0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f` | [view](https://sepolia.arbiscan.io/address/0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f) |
 | ConfidentialEscrow | `0xC4333F84F5034D8691CB95f068def2e3B6DC60Fa` | [view](https://sepolia.arbiscan.io/address/0xC4333F84F5034D8691CB95f068def2e3B6DC60Fa) |
 
@@ -412,3 +415,66 @@ Zero TypeScript errors. Zero build errors.
 3. **Gasless relay** — abstract the encryption gas cost using a relayer
 4. **Multi-language UI** — target Yoruba, Hindi, Spanish for the core demographic
 5. **Mainnet migration** — swap Transak test key for production, adjust USDC address
+
+
+---
+
+## Wave 3 Additional Improvements (Latest)
+
+### 9. Browse Circles Discovery Page (pp.browse.tsx)
+
+**What was added:**
+- New route /app/browse accessible from the sidebar as "Browse Circles"
+- Shows ALL circles deployed on-chain (multicall getCircleInfo for every circle ID)
+- Stats bar: Total Circles / Open to Join / Completed
+- Live search by circle ID + status filter (All / Open / Active / Completed)
+- Per-circle card shows: members fill bar, reputation gate badge, min tier label
+- "Join Circle" button navigates to My Circles with that circle pre-selected
+- Empty states when no circles exist or filters match nothing
+- Auto-refreshes every 20 seconds
+- Solves the key discoverability gap: previously users couldn't find circles without knowing the ID
+
+### 10. Competitor Comparison Table (Landing Page)
+
+**What was added:**
+- Full feature comparison table in the Market Validation section
+- KURA vs "Every Other Savings Circle" across 7 dimensions:
+  - Contribution amounts private
+  - Sealed-bid allocation
+  - Encrypted credit score
+  - FHE-provably fair ordering
+  - Reputation-gated membership
+  - Non-custodial on-chain
+  - Open source & verified
+- Clear visual: checkmarks for KURA, X marks for others
+
+### 11. Roadmap Updated to Wave 3 Live
+
+- Roadmap on landing page updated: Wave 3 is now marked as **Live** (was previously showing Wave 2 as "Full Protocol Live" and Wave 3 as "In Progress")
+- Wave 3 description now accurately reflects: CoFHE SDK 0.5.1 migration, encrypted fair ordering, reputation-gated circles, onboarding, Transak, PWA, 39 tests
+
+### 12. Docs & Contract Addresses Sync
+
+- docs.tsx contract addresses updated to latest deployment
+- SDK version reference updated from @cofhe/sdk 0.4 ? @cofhe/sdk 0.5.1
+- WAVE3_SUMMARY.md contract addresses updated to match current deployment
+
+---
+
+## Final State Summary
+
+| Item | Status |
+|------|--------|
+| All 6 contracts deployed | ? Arbitrum Sepolia |
+| All 6 contracts verified | ? Arbiscan |
+| Test suite | ? 39 passing / 14 pending / 0 failing |
+| Frontend build | ? Clean (no TS errors) |
+| PWA | ? 101 precached entries |
+| Onboarding wizard | ? 4-step guided flow |
+| Browse Circles page | ? Full discovery UI |
+| CoFHE SDK 0.5.1 | ? Migrated |
+| FHE.randomCiphertext ordering | ? KuraRoundOrder.sol |
+| Reputation gates | ? getMemberTier + joinCircle guard |
+| Fiat on-ramp | ? Transak integration |
+| Competitor comparison table | ? Landing page |
+| Wave 3 roadmap marked Live | ? Landing page |
