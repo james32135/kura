@@ -65,7 +65,6 @@ export default defineConfig({
           if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) return "react";
           if (id.includes("node_modules/wagmi") || id.includes("node_modules/viem")) return "wagmi";
           if (id.includes("node_modules/@rainbow-me")) return "rainbowkit";
-          if (id.includes("node_modules/@cofhe") || id.includes("node_modules/tfhe")) return "fhe";
           if (id.includes("node_modules/@radix-ui")) return "radix";
           if (id.includes("node_modules/framer-motion")) return "framer";
         },
