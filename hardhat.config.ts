@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY!;
+const ARBISCAN_API_KEY = process.env.ARBISCAN_API_KEY ?? "";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -24,6 +25,21 @@ const config: HardhatUserConfig = {
       chainId: 421614,
       accounts: [PRIVATE_KEY],
     },
+  },
+  etherscan: {
+    apiKey: {
+      arbitrumSepolia: ARBISCAN_API_KEY,
+    },
+    customChains: [
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io",
+        },
+      },
+    ],
   },
   cofhe: {
     logMocks: true,
