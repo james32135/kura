@@ -151,7 +151,7 @@ function Hero() {
             {[
               { v: "$500B+", l: "Informal Savings Market" },
               { v: "1.2B", l: "People Using Savings Circles" },
-              { v: "14", l: "FHE Operations Used" },
+              { v: "15+", l: "FHE Operations Used" },
             ].map((s) => (
               <div key={s.l} className="text-center">
                 <div className="font-display font-semibold text-3xl sm:text-5xl text-gradient">
@@ -203,8 +203,8 @@ function HowItWorks() {
     {
       n: "04",
       icon: TrendingUp,
-      t: "Build Credit",
-      d: "Every timely contribution earns +1 encrypted point via FHE.add(). Circle completion earns +5. Prove reliability to DeFi lenders through FHE.gte() — double-blind, neither score nor threshold revealed.",
+      t: "Build Credit & Prove Trust",
+      d: "Every timely contribution earns +1 encrypted point via FHE.add(). Circle completion earns +5. Reputation gates let circle creators require Bronze / Silver / Gold / Diamond tiers. Prove reliability to DeFi lenders through FHE.gte() — double-blind, neither score nor threshold revealed.",
     },
   ];
 
@@ -314,9 +314,11 @@ function WhyFHE() {
   const withKura = [
     "euint64 encrypted contributions",
     "Sealed-bid allocation (FHE.lte)",
+    "FHE.randomCiphertext fair ordering",
+    "Reputation-gated membership (5 tiers)",
     "On-chain FHE enforcement",
     "Portable encrypted credit (5 tiers)",
-    "14 FHE operations, zero plaintext",
+    "15+ FHE operations, zero plaintext",
   ];
 
   return (
@@ -405,7 +407,7 @@ function ThreeLayers() {
             Six contracts. <span className="text-gradient-accent">Complete privacy.</span>
           </h2>
           <p className="mt-4 text-base text-muted-foreground max-w-2xl">
-            All deployed on Arbitrum Sepolia. Every storage slot is a ciphertext handle — block explorers see only hashes, never values.
+            All deployed on Arbitrum Sepolia. KuraRoundOrder uses FHE.randomCiphertext() for provably-fair payout ordering — no admin can see or manipulate positions. Every storage slot is a ciphertext handle.
           </p>
         </Reveal>
 
@@ -628,7 +630,7 @@ function StatusPill({ status }: { status: string }) {
 function TechStack() {
   const items = [
     "Fhenix CoFHE",
-    "@cofhe/sdk 0.4",
+    "@cofhe/sdk 0.5.1",
     "Solidity 0.8.25",
     "React 19",
     "TypeScript",

@@ -52,9 +52,9 @@ function Docs() {
             KURA <span className="text-gradient-accent">Protocol</span> Docs
           </h1>
           <p className="mt-5 text-muted-foreground max-w-2xl mx-auto">
-            Complete technical reference — six smart contracts, 14 FHE operations, five encrypted
-            credit tiers, sealed-bid auction with eaddress tracking, and ReineiraOS escrow
-            integration. Deployed on Arbitrum Sepolia with Fhenix CoFHE.
+            Complete technical reference — six smart contracts, 15+ FHE operations, five encrypted
+            credit tiers, sealed-bid auction with eaddress tracking, FHE.randomCiphertext payout ordering,
+            reputation-gated membership, and ReineiraOS escrow integration. Deployed on Arbitrum Sepolia with Fhenix CoFHE.
           </p>
         </div>
       </div>
@@ -92,9 +92,9 @@ function Docs() {
               financial transparency: social shame, leader coercion, free-rider fraud, and absence of credit history.
             </p>
             <p>
-              Six Solidity contracts use <strong>14 distinct FHE operations</strong> (add, sub, min, gte, lte, eq, select, div,
-              asEuint64, asEaddress, allow, allowThis, allowPublic, sealoutput) to implement encrypted pool accumulation,
-              sealed-bid auctions with eaddress tracking, five-tier encrypted credit scoring, and ReineiraOS escrow integration.
+              Six Solidity contracts use <strong>15+ distinct FHE operations</strong> (add, sub, min, gte, lte, eq, select, div,
+              asEuint64, asEaddress, randomCiphertext, allow, allowThis, allowPublic, sealoutput) to implement encrypted pool accumulation,
+              sealed-bid auctions with eaddress tracking, five-tier encrypted credit scoring, FHE.randomCiphertext provably-fair payout ordering, reputation-gated membership, and ReineiraOS escrow integration.
             </p>
             <p>
               Built on Fhenix CoFHE with <code>@cofhe/sdk 0.5.1</code>, deployed on
@@ -174,6 +174,18 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
             />
 
             <ContractRef
+              name="KuraRoundOrder.sol"
+              address="0x7204C03033ad8FfBAFfdE9313fd14cAF0Df7182a"
+              fns={[
+                ["registerMember(circleId, member)", "Register a member for payout ordering in a circle"],
+                ["assignOrder(circleId)", "Generate FHE.randomCiphertext(euint8) seed and assign encrypted positions to all members"],
+                ["getMyPositionHandle(circleId) → euint64", "Returns caller's own encrypted payout position (FHE.allow scoped to member)"],
+                ["getPositionHandle(circleId, member) → euint64", "Returns any member's position handle (admin only)"],
+                ["orderAssigned(circleId) → bool", "Check whether order assignment has been completed"],
+              ]}
+            />
+
+            <ContractRef
               name="KuraConditionResolver.sol"
               address="0xA35d76dbbe380a75777F93C6773A20f5ebAbA744"
               fns={[
@@ -197,7 +209,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
             <p>
               Fully Homomorphic Encryption allows smart contracts to perform arithmetic, comparison,
               and conditional selection on encrypted values <strong>without decrypting them</strong>.
-              KURA uses 14 distinct FHE operations across its contract suite.
+              KURA uses 15+ distinct FHE operations across its contract suite.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -223,6 +235,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
                     ["FHE.allowThis()", "All", "Contract retains compute access"],
                     ["FHE.allow(h, addr)", "All", "Grant specific address access to handle"],
                     ["FHE.allowPublic()", "Bid v2", "Publish encrypted handle for settlement"],
+                    ["FHE.randomCiphertext()", "KuraRoundOrder", "Encrypted on-chain randomness for provably-fair payout ordering"],
                     ["FHE.sealoutput()", "All", "Permit-based encrypted viewing"],
                   ].map(([op, used, purpose]) => (
                     <tr key={op} className="border-b border-border/30">
@@ -261,6 +274,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
                     ["Permanent privacy of losing bids", "N/A", "N/A", "Yes — never decrypted"],
                     ["Asynchronous participation", "Yes", "No — all must be online", "Yes — deposit anytime"],
                     ["Composable on-chain credit", "Attestation only", "No", "Yes — double-blind FHE.gte()"],
+                    ["Encrypted on-chain randomness", "No", "No", "Yes — FHE.randomCiphertext()"],
                   ].map(([cap, zk, mpc, fhe]) => (
                     <tr key={cap} className="border-b border-border/30">
                       <td className="py-2 pr-4 text-xs text-foreground font-medium">{cap}</td>
@@ -301,6 +315,7 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
                     ["Pool total (encrypted)", "Admin only", "FHE.allow(pool, admin)"],
                     ["Individual bids", "Bidder only", "FHE.allow(bid, bidder)"],
                     ["Winning bid (settlement)", "All (published)", "decryptForTx + publishDecryptResult"],
+                    ["Payout position", "Member only", "FHE.allow(pos, member)"],
                     ["Credit score", "Member only", "FHE.allow(score, member)"],
                     ["Credit check result", "Requester only", "FHE.allow(ebool, requester)"],
                     ["Raw plaintext data", "NEVER public", "No FHE.allowPublic() on user data"],
@@ -378,7 +393,9 @@ KuraEscrowAdapter.sol  ──► ConfidentialEscrow (ReineiraOS)`}</pre>
                 ["KuraCircle", "0x5B2DBDCC210Df55486BdBc7E1A16B1f8CF0673b7"],
                 ["KuraBid v2", "0x0179416EfeD421aB3582B2b4Cb238450d60A9Af1"],
                 ["KuraCredit", "0xF6e42A0523373F6Ef89d91E925a4a93299b75144"],
+                ["KuraRoundOrder", "0x7204C03033ad8FfBAFfdE9313fd14cAF0Df7182a"],
                 ["KuraConditionResolver", "0xA35d76dbbe380a75777F93C6773A20f5ebAbA744"],
+                ["KuraEscrowAdapter", "0xaa9814c029302aA3d66C502D2210c456aC3c9aD8"],
                 ["cUSDC (ConfidentialUSDC)", "0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f"],
               ].map(([name, addr]) => (
                 <div key={name} className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-border/50 bg-card/30">
