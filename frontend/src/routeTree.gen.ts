@@ -13,7 +13,12 @@ import { Route as DocsRouteImport } from './routes/docs'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppVaultRouteImport } from './routes/app.vault'
+import { Route as AppStreamRouteImport } from './routes/app.stream'
+import { Route as AppPrivacyRouteImport } from './routes/app.privacy'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
+import { Route as AppGovernanceRouteImport } from './routes/app.governance'
+import { Route as AppDisputeRouteImport } from './routes/app.dispute'
 import { Route as AppCreditRouteImport } from './routes/app.credit'
 import { Route as AppContributeRouteImport } from './routes/app.contribute'
 import { Route as AppCirclesRouteImport } from './routes/app.circles'
@@ -41,9 +46,34 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppVaultRoute = AppVaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStreamRoute = AppStreamRouteImport.update({
+  id: '/stream',
+  path: '/stream',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPrivacyRoute = AppPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGovernanceRoute = AppGovernanceRouteImport.update({
+  id: '/governance',
+  path: '/governance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDisputeRoute = AppDisputeRouteImport.update({
+  id: '/dispute',
+  path: '/dispute',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCreditRoute = AppCreditRouteImport.update({
@@ -87,7 +117,12 @@ export interface FileRoutesByFullPath {
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
+  '/app/dispute': typeof AppDisputeRoute
+  '/app/governance': typeof AppGovernanceRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/privacy': typeof AppPrivacyRoute
+  '/app/stream': typeof AppStreamRoute
+  '/app/vault': typeof AppVaultRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -99,7 +134,12 @@ export interface FileRoutesByTo {
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
+  '/app/dispute': typeof AppDisputeRoute
+  '/app/governance': typeof AppGovernanceRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/privacy': typeof AppPrivacyRoute
+  '/app/stream': typeof AppStreamRoute
+  '/app/vault': typeof AppVaultRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -113,7 +153,12 @@ export interface FileRoutesById {
   '/app/circles': typeof AppCirclesRoute
   '/app/contribute': typeof AppContributeRoute
   '/app/credit': typeof AppCreditRoute
+  '/app/dispute': typeof AppDisputeRoute
+  '/app/governance': typeof AppGovernanceRoute
   '/app/onboarding': typeof AppOnboardingRoute
+  '/app/privacy': typeof AppPrivacyRoute
+  '/app/stream': typeof AppStreamRoute
+  '/app/vault': typeof AppVaultRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -128,7 +173,12 @@ export interface FileRouteTypes {
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
+    | '/app/dispute'
+    | '/app/governance'
     | '/app/onboarding'
+    | '/app/privacy'
+    | '/app/stream'
+    | '/app/vault'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -140,7 +190,12 @@ export interface FileRouteTypes {
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
+    | '/app/dispute'
+    | '/app/governance'
     | '/app/onboarding'
+    | '/app/privacy'
+    | '/app/stream'
+    | '/app/vault'
     | '/app'
   id:
     | '__root__'
@@ -153,7 +208,12 @@ export interface FileRouteTypes {
     | '/app/circles'
     | '/app/contribute'
     | '/app/credit'
+    | '/app/dispute'
+    | '/app/governance'
     | '/app/onboarding'
+    | '/app/privacy'
+    | '/app/stream'
+    | '/app/vault'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -193,11 +253,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/vault': {
+      id: '/app/vault'
+      path: '/vault'
+      fullPath: '/app/vault'
+      preLoaderRoute: typeof AppVaultRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/stream': {
+      id: '/app/stream'
+      path: '/stream'
+      fullPath: '/app/stream'
+      preLoaderRoute: typeof AppStreamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/privacy': {
+      id: '/app/privacy'
+      path: '/privacy'
+      fullPath: '/app/privacy'
+      preLoaderRoute: typeof AppPrivacyRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/onboarding': {
       id: '/app/onboarding'
       path: '/onboarding'
       fullPath: '/app/onboarding'
       preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/governance': {
+      id: '/app/governance'
+      path: '/governance'
+      fullPath: '/app/governance'
+      preLoaderRoute: typeof AppGovernanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dispute': {
+      id: '/app/dispute'
+      path: '/dispute'
+      fullPath: '/app/dispute'
+      preLoaderRoute: typeof AppDisputeRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/credit': {
@@ -252,7 +347,12 @@ interface AppRouteChildren {
   AppCirclesRoute: typeof AppCirclesRoute
   AppContributeRoute: typeof AppContributeRoute
   AppCreditRoute: typeof AppCreditRoute
+  AppDisputeRoute: typeof AppDisputeRoute
+  AppGovernanceRoute: typeof AppGovernanceRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
+  AppPrivacyRoute: typeof AppPrivacyRoute
+  AppStreamRoute: typeof AppStreamRoute
+  AppVaultRoute: typeof AppVaultRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -263,7 +363,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppCirclesRoute: AppCirclesRoute,
   AppContributeRoute: AppContributeRoute,
   AppCreditRoute: AppCreditRoute,
+  AppDisputeRoute: AppDisputeRoute,
+  AppGovernanceRoute: AppGovernanceRoute,
   AppOnboardingRoute: AppOnboardingRoute,
+  AppPrivacyRoute: AppPrivacyRoute,
+  AppStreamRoute: AppStreamRoute,
+  AppVaultRoute: AppVaultRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

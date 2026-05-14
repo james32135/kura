@@ -5,13 +5,21 @@
 
 export const CHAIN_ID = 421614;
 
-// KURA Protocol contracts
+// KURA Protocol contracts — Wave 3
 export const KURA_CIRCLE_ADDRESS = "0x5B2DBDCC210Df55486BdBc7E1A16B1f8CF0673b7" as const;
 export const KURA_BID_ADDRESS = "0x0179416EfeD421aB3582B2b4Cb238450d60A9Af1" as const;
 export const KURA_CREDIT_ADDRESS = "0xF6e42A0523373F6Ef89d91E925a4a93299b75144" as const;
 export const KURA_CONDITION_RESOLVER_ADDRESS = "0xA35d76dbbe380a75777F93C6773A20f5ebAbA744" as const;
 export const KURA_ESCROW_ADAPTER_ADDRESS = "0xaa9814c029302aA3d66C502D2210c456aC3c9aD8" as const;
 export const KURA_ROUND_ORDER_ADDRESS = "0x7204C03033ad8FfBAFfdE9313fd14cAF0Df7182a" as const;
+
+// KURA Protocol contracts — Wave 4 (fill in after running scripts/deployWave4.ts)
+export const KURA_MEMBER_REGISTRY_ADDRESS = "" as const;
+export const KURA_CREDIT_V2_ADDRESS = "" as const;
+export const KURA_PRIVACY_VAULT_ADDRESS = "" as const;
+export const KURA_STREAM_PAY_ADDRESS = "" as const;
+export const KURA_DISPUTE_RESOLUTION_ADDRESS = "" as const;
+export const KURA_GOVERNANCE_ADDRESS = "" as const;
 
 // ReineiraOS / external contracts
 export const CUSDC_ADDRESS = "0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f" as const;
@@ -2669,9 +2677,88 @@ export const CUSDC_ABI = [
   { name: "setOperator", type: "function", stateMutability: "nonpayable", inputs: [{ name: "operator", type: "address" }, { name: "until", type: "uint48" }], outputs: [] },
   { name: "isOperator", type: "function", stateMutability: "view", inputs: [{ name: "holder", type: "address" }, { name: "spender", type: "address" }], outputs: [{ type: "bool" }] },
   { name: "confidentialBalanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] },
-  { name: "name", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
-  { name: "symbol", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
-  { name: "decimals", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint8" }] }
+] as const;
+
+// ─── Wave 4 ABIs ──────────────────────────────────────────────────────────────
+
+export const KURA_MEMBER_REGISTRY_ABI = [
+  { name: "registerMember", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
+  { name: "isMember", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "candidate", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "allowMemberSelf", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "slotIndex", type: "uint256" }], outputs: [] },
+  { name: "getMemberCount", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getEncMemberSlot", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }, { name: "slotIndex", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "memberCount", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "kuraCircle", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address" }] },
+  { name: "MemberRegistered", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "slotIndex", type: "uint256", indexed: false }] },
+  { name: "MemberAccessGranted", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "slotIndex", type: "uint256", indexed: false }, { name: "member", type: "address", indexed: false }] },
+] as const;
+
+export const KURA_CREDIT_V2_ABI = [
+  { name: "recordContributionWeighted", type: "function", stateMutability: "nonpayable", inputs: [{ name: "_member", type: "address" }, { name: "circleId", type: "uint256" }], outputs: [] },
+  { name: "getSquaredScore", type: "function", stateMutability: "nonpayable", inputs: [{ name: "_member", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getEncryptedTier", type: "function", stateMutability: "nonpayable", inputs: [{ name: "_member", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "verifyTierInRange", type: "function", stateMutability: "nonpayable", inputs: [{ name: "_member", type: "address" }, { name: "minTier", type: "uint8" }, { name: "maxTier", type: "uint8" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getMyScore", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  { name: "setCircleWeight", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "weightBps", type: "uint64" }], outputs: [] },
+  { name: "setAuthorized", type: "function", stateMutability: "nonpayable", inputs: [{ name: "_addr", type: "address" }, { name: "_status", type: "bool" }], outputs: [] },
+  { name: "setVerifier", type: "function", stateMutability: "nonpayable", inputs: [{ name: "_addr", type: "address" }, { name: "_status", type: "bool" }], outputs: [] },
+  { name: "contributionCount", type: "function", stateMutability: "view", inputs: [{ name: "member", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "ContributionWeighted", type: "event", inputs: [{ name: "member", type: "address", indexed: true }, { name: "circleId", type: "uint256", indexed: true }] },
+] as const;
+
+export const KURA_PRIVACY_VAULT_ABI = [
+  { name: "initVault", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "isPrivate", type: "bool" }], outputs: [] },
+  { name: "storeMetadata", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "encNameChunks", type: "tuple[]", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }, { name: "encDescChunks", type: "tuple[]", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }], outputs: [] },
+  { name: "allowMemberToRead", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
+  { name: "revokeMemberAccess", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
+  { name: "getNameHandles", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256[]" }] },
+  { name: "getDescHandles", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256[]" }] },
+  { name: "isPrivateCircle", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "bool" }] },
+  { name: "setCirclePrivate", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "isPrivate", type: "bool" }], outputs: [] },
+  { name: "hasAccess", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [{ name: "", type: "bool" }] },
+  { name: "getMetadataCounts", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "nameChunks", type: "uint256" }, { name: "descChunks", type: "uint256" }] },
+  { name: "MetadataStored", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "nameChunks", type: "uint256", indexed: false }, { name: "descChunks", type: "uint256", indexed: false }] },
+  { name: "AccessGranted", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "member", type: "address", indexed: true }] },
+] as const;
+
+export const KURA_STREAM_PAY_ABI = [
+  { name: "createStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "encRatePerBlock", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }, { name: "maxBlocks", type: "uint256" }], outputs: [] },
+  { name: "collectStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
+  { name: "cancelStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }], outputs: [] },
+  { name: "hasActiveStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getStreamPool", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getMyPaid", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getStreamInfo", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [{ name: "startBlock", type: "uint256" }, { name: "maxBlocks", type: "uint256" }, { name: "active", type: "bool" }] },
+  { name: "StreamCreated", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "member", type: "address", indexed: true }, { name: "maxBlocks", type: "uint256", indexed: false }] },
+  { name: "StreamCollected", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "round", type: "uint256", indexed: true }] },
+  { name: "StreamCancelled", type: "event", inputs: [{ name: "circleId", type: "uint256", indexed: true }, { name: "member", type: "address", indexed: true }] },
+] as const;
+
+export const KURA_DISPUTE_RESOLUTION_ABI = [
+  { name: "raiseDispute", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "round", type: "uint256" }, { name: "encClaimedAmount", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }], outputs: [{ name: "disputeId", type: "uint256" }] },
+  { name: "checkDisputeValidity", type: "function", stateMutability: "nonpayable", inputs: [{ name: "disputeId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "resolveDispute", type: "function", stateMutability: "nonpayable", inputs: [{ name: "disputeId", type: "uint256" }, { name: "approve", type: "bool" }], outputs: [] },
+  { name: "getDisputeStatus", type: "function", stateMutability: "view", inputs: [{ name: "disputeId", type: "uint256" }], outputs: [{ name: "status", type: "uint8" }, { name: "circleId", type: "uint256" }, { name: "round", type: "uint256" }, { name: "claimant", type: "address" }, { name: "createdAt", type: "uint256" }] },
+  { name: "getMyClaimedAmount", type: "function", stateMutability: "view", inputs: [{ name: "disputeId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "disputeCount", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  { name: "memberDisputeId", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }, { name: "round", type: "uint256" }, { name: "member", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "DisputeRaised", type: "event", inputs: [{ name: "disputeId", type: "uint256", indexed: true }, { name: "circleId", type: "uint256", indexed: true }, { name: "round", type: "uint256", indexed: false }, { name: "claimant", type: "address", indexed: false }] },
+  { name: "DisputeResolved", type: "event", inputs: [{ name: "disputeId", type: "uint256", indexed: true }, { name: "status", type: "uint8", indexed: false }] },
+] as const;
+
+export const KURA_GOVERNANCE_ABI = [
+  { name: "createProposal", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "description", type: "string" }, { name: "duration", type: "uint256" }, { name: "quorum", type: "uint256" }], outputs: [{ name: "proposalId", type: "uint256" }] },
+  { name: "submitVote", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "encVote", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }], outputs: [] },
+  { name: "closeVote", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "yesCount", type: "uint64" }, { name: "totalVotes", type: "uint64" }, { name: "yesSig", type: "bytes" }, { name: "totalSig", type: "bytes" }], outputs: [] },
+  { name: "verifyMajority", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "threshold", type: "uint64" }], outputs: [{ name: "", type: "uint256" }] },
+  { name: "cancelProposal", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }], outputs: [] },
+  { name: "getProposal", type: "function", stateMutability: "view", inputs: [{ name: "proposalId", type: "uint256" }], outputs: [{ name: "circleId", type: "uint256" }, { name: "description", type: "string" }, { name: "deadline", type: "uint256" }, { name: "quorum", type: "uint256" }, { name: "plainYesCount", type: "uint256" }, { name: "plainTotalVotes", type: "uint256" }, { name: "status", type: "uint8" }, { name: "proposer", type: "address" }] },
+  { name: "getVoteHandles", type: "function", stateMutability: "view", inputs: [{ name: "proposalId", type: "uint256" }], outputs: [{ name: "encYesCount", type: "uint256" }, { name: "encTotalVotes", type: "uint256" }] },
+  { name: "hasVoted", type: "function", stateMutability: "view", inputs: [{ name: "proposalId", type: "uint256" }, { name: "voter", type: "address" }], outputs: [{ name: "", type: "bool" }] },
+  { name: "proposalCount", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  { name: "ProposalCreated", type: "event", inputs: [{ name: "proposalId", type: "uint256", indexed: true }, { name: "circleId", type: "uint256", indexed: true }, { name: "proposer", type: "address", indexed: false }] },
+  { name: "VoteSubmitted", type: "event", inputs: [{ name: "proposalId", type: "uint256", indexed: true }, { name: "circleId", type: "uint256", indexed: true }] },
+  { name: "ProposalClosed", type: "event", inputs: [{ name: "proposalId", type: "uint256", indexed: true }, { name: "status", type: "uint8", indexed: false }] },
 ] as const;
 
 // USDC minimal ABI for wrap approval

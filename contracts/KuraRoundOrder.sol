@@ -53,8 +53,11 @@ contract KuraRoundOrder {
         require(_assigned[circleId][member], "No position assigned");
         return _positions[circleId][member];
     }
-    function getMyPositionHandle(uint256 circleId) external view returns (euint8) {
+    /// @notice Get caller's position handle and grant fresh access via FHE.allowSender.
+    /// Non-view: FHE.allowSender writes to the ACL.
+    function getMyPositionHandle(uint256 circleId) external returns (euint8) {
         require(_assigned[circleId][msg.sender], "No position assigned");
+        FHE.allowSender(_positions[circleId][msg.sender]);
         return _positions[circleId][msg.sender];
     }
     function getMembers(uint256 circleId) external view returns (address[] memory) {

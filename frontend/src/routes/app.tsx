@@ -12,6 +12,10 @@ import {
   HelpCircle,
   Layers,
   Globe,
+  Vote,
+  AlertTriangle,
+  ShieldCheck,
+  Database,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -46,8 +50,13 @@ const nav: NavEntry[] = [
   { to: "/app/circles", label: "My Circles", icon: Layers, exact: false, group: "Overview" },
   { to: "/app/browse", label: "Browse Circles", icon: Globe, exact: false, group: "Overview" },
   { to: "/app/contribute", label: "Contribute", icon: CircleDollarSign, exact: false, group: "Circle" },
+  { to: "/app/stream", label: "Stream Pay", icon: Zap, exact: false, group: "Circle" },
   { to: "/app/bid", label: "Bid for Pool", icon: Gavel, exact: false, group: "Circle" },
   { to: "/app/credit", label: "Reputation", icon: Shield, exact: false, group: "Circle" },
+  { to: "/app/governance", label: "Governance", icon: Vote, exact: false, group: "Circle" },
+  { to: "/app/dispute", label: "Disputes", icon: AlertTriangle, exact: false, group: "Circle" },
+  { to: "/app/privacy", label: "Privacy Vault", icon: ShieldCheck, exact: false, group: "Circle" },
+  { to: "/app/vault", label: "Member Registry", icon: Database, exact: false, group: "Circle" },
   { to: "/app/admin", label: "Manage Circle", icon: Settings, exact: false, group: "Admin", adminOnly: true },
 ];
 

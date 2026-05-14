@@ -133,9 +133,11 @@ contract KuraBid {
         require(roundClosed[_circleId][_round], "Round not closed");
         require(!roundResults[_circleId][_round].resolved, "Already resolved");
         require(kuraCircle.isMember(_circleId, _winner), "Winner not a member");
+        // Guard: ensure closeRound was called (lowest bid is publicly decryptable)
+        require(FHE.isPubliclyAllowed(lowestBid[_circleId][_round]), "Round not closed properly");
 
-        // Verify the decryption result cryptographically
-        FHE.publishDecryptResult(
+        // Verify decryption without storing winner identity on-chain permanently
+        FHE.verifyDecryptResult(
             lowestBid[_circleId][_round],
             _winningBidPlaintext,
             _decryptSignature
@@ -153,6 +155,13 @@ contract KuraBid {
 
     function getLowestBidHandle(uint256 _circleId, uint256 _round) external view returns (euint64) {
         return lowestBid[_circleId][_round];
+    }
+
+    /// @notice Read stored decryption result for the lowest bid (non-reverting).
+    /// Returns 0 if not yet published. Use after publishDecryptResult is called.
+    function getSettledBidAmount(uint256 _circleId, uint256 _round) external view returns (uint256) {
+        if (!roundResults[_circleId][_round].resolved) return 0;
+        return FHE.getDecryptResultSafe(lowestBid[_circleId][_round]);
     }
 
     /// @notice Returns the encrypted handle of the winning bidder address.

@@ -32,6 +32,7 @@ contract KuraCircle {
     struct Circle {
         address admin;
         uint256 memberCount;
+        euint64 encPoolTarget;   // encrypted target = minContrib * memberCount (set at startRound)
         uint256 maxMembers;
         uint256 roundDuration;
         uint256 currentRound;
@@ -65,8 +66,10 @@ contract KuraCircle {
 
     event CircleCreated(uint256 indexed circleId, address admin, uint256 maxMembers, uint256 totalRounds);
     event ReputationGated(uint256 indexed circleId, uint8 minTier);
-    event MemberJoined(uint256 indexed circleId, address member);
-    event ContributionMade(uint256 indexed circleId, address member, uint256 round);
+    /// @dev Address removed from event — privacy: member identity not leaked on-chain
+    event MemberJoined(uint256 indexed circleId);
+    /// @dev Address and amount removed — only circleId+round emitted for privacy
+    event ContributionMade(uint256 indexed circleId, uint256 indexed round);
     event RoundStarted(uint256 indexed circleId, uint256 round, uint256 deadline);
     event PoolPayout(uint256 indexed circleId, uint256 round, address winner);
     event CircleCompleted(uint256 indexed circleId);
@@ -154,7 +157,8 @@ contract KuraCircle {
         // Register member in fair ordering system
         roundOrder.registerMember(_circleId, msg.sender);
 
-        emit MemberJoined(_circleId, msg.sender);
+        // Privacy: emit only circleId, no address
+        emit MemberJoined(_circleId);
     }
 
     /// @notice Expose circle's minimum credit tier requirement.
@@ -176,6 +180,14 @@ contract KuraCircle {
         c.encPoolBalance = encZero;
         FHE.allowThis(c.encPoolBalance);
         FHE.allow(c.encPoolBalance, c.admin);
+
+        // Compute encrypted pool target = minContrib * memberCount
+        // Allows admin to check pool health without revealing individual contributions
+        euint64 encCount = FHE.asEuint64(uint64(c.memberCount));
+        FHE.allowThis(encCount);
+        c.encPoolTarget = FHE.mul(c.encMinContribution, encCount);
+        FHE.allowThis(c.encPoolTarget);
+        FHE.allow(c.encPoolTarget, c.admin);
 
         emit RoundStarted(_circleId, c.currentRound, c.roundDeadline);
     }
@@ -228,8 +240,8 @@ contract KuraCircle {
         // Record contribution in credit system
         kuraCredit.recordContribution(msg.sender);
 
-        // Event emits NO amounts — privacy preserved
-        emit ContributionMade(_circleId, msg.sender, c.currentRound);
+        // Event emits only circleId + round — no address, no amount
+        emit ContributionMade(_circleId, c.currentRound);
     }
 
     /// @notice Transfer the pool to the round winner (called by KuraBid after settlement).
@@ -307,5 +319,22 @@ contract KuraCircle {
 
     function getMemberCount(uint256 _circleId) external view returns (uint256) {
         return circles[_circleId].memberCount;
+    }
+
+    /// @notice Returns encrypted pool target handle (admin-only view).
+    function getPoolTarget(uint256 _circleId) external view returns (euint64) {
+        require(msg.sender == circles[_circleId].admin, "Only admin");
+        return circles[_circleId].encPoolTarget;
+    }
+
+    /// @notice Encrypted check: returns ebool that is true when pool >= target.
+    /// Admin can decrypt to verify round is fully funded without seeing individual contributions.
+    function checkPoolFull(uint256 _circleId) external returns (ebool) {
+        Circle storage c = circles[_circleId];
+        require(msg.sender == c.admin, "Only admin");
+        require(FHE.isInitialized(c.encPoolTarget), "Round not started");
+        ebool full = FHE.gte(c.encPoolBalance, c.encPoolTarget);
+        FHE.allow(full, msg.sender);
+        return full;
     }
 }

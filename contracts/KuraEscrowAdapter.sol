@@ -55,6 +55,8 @@ contract KuraEscrowAdapter {
     mapping(uint256 => mapping(uint256 => PendingEscrow)) public pendingEscrows; // circleId => round => escrow
     mapping(uint256 => uint256) public escrowToCircle; // escrowId => circleId
     mapping(uint256 => uint256) public escrowToRound;  // escrowId => round
+    /// @dev Encrypted winner addresses stored for self-claim proof verification
+    mapping(uint256 => mapping(uint256 => eaddress)) private encryptedWinners;
 
     IConfidentialEscrow public confidentialEscrow;
     IKuraCircleAdapter public kuraCircle;
@@ -64,6 +66,7 @@ contract KuraEscrowAdapter {
 
     event EscrowCreated(uint256 indexed circleId, uint256 round, address winner, uint256 escrowId);
     event EscrowClaimed(uint256 indexed circleId, uint256 round, address winner);
+    event EscrowClaimedByProof(uint256 indexed circleId, uint256 round);
 
     constructor(
         address _confidentialEscrow,
@@ -120,8 +123,40 @@ contract KuraEscrowAdapter {
         escrowToCircle[escrowId] = _circleId;
         escrowToRound[escrowId] = _round;
 
+        // Store encrypted winner address for self-claim proof
+        encryptedWinners[_circleId][_round] = FHE.asEaddress(_winner);
+        FHE.allowThis(encryptedWinners[_circleId][_round]);
+
         emit EscrowCreated(_circleId, _round, _winner, escrowId);
         return escrowId;
+    }
+
+    /// @notice Privacy-preserving self-claim: caller proves they are the winner by providing
+    /// their plaintext address plus the decryption signature. Uses FHE.eq on eaddress
+    /// so admin never needs to know the winner — winner self-identifies via cryptographic proof.
+    function claimEscrowWithProof(
+        uint256 _circleId,
+        uint256 _round,
+        bytes calldata _decryptSignature
+    ) external {
+        PendingEscrow storage pe = pendingEscrows[_circleId][_round];
+        require(pe.created, "Escrow not created");
+        require(!pe.claimed, "Already claimed");
+        require(FHE.isInitialized(encryptedWinners[_circleId][_round]), "No encrypted winner stored");
+
+        // Verify caller is the winner via encrypted address equality
+        eaddress encCaller = FHE.asEaddress(msg.sender);
+        FHE.allowThis(encCaller);
+        ebool isWinner = FHE.eq(encryptedWinners[_circleId][_round], encCaller);
+        FHE.allowThis(isWinner);
+
+        // Verify the decryption result: plaintext=1 (true) must match the ebool
+        FHE.verifyDecryptResult(isWinner, 1, _decryptSignature);
+
+        pe.claimed = true;
+        confidentialEscrow.redeem(pe.escrowId);
+
+        emit EscrowClaimedByProof(_circleId, _round);
     }
 
     /// @notice Fund an existing escrow with encrypted cUSDC from the circle pool.

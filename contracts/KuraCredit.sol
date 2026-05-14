@@ -23,11 +23,14 @@ contract KuraCredit {
 
     // Access control: only authorized contracts can record
     mapping(address => bool) public authorized;
+    /// @notice Authorized verifiers can query any member's tier (e.g., other circle contracts)
+    mapping(address => bool) public authorizedVerifiers;
     address public owner;
 
     event CreditIncremented(address indexed member);
     event CreditVerified(address indexed member, address indexed requester);
     event AuthorizedUpdated(address indexed addr, bool status);
+    event VerifierUpdated(address indexed addr, bool status);
     event CircleCompletionRecorded(address indexed member, uint256 totalCompleted);
     event OnTimePaymentRecorded(address indexed member);
 
@@ -54,6 +57,12 @@ contract KuraCredit {
     function setAuthorized(address _addr, bool _status) external onlyOwner {
         authorized[_addr] = _status;
         emit AuthorizedUpdated(_addr, _status);
+    }
+
+    /// @notice Grant or revoke a contract's ability to call getMemberTier on any member.
+    function setVerifier(address _addr, bool _status) external onlyOwner {
+        authorizedVerifiers[_addr] = _status;
+        emit VerifierUpdated(_addr, _status);
     }
 
     /// @notice Called by KuraCircle on valid contributions. Adds contribution weight to score.
@@ -129,8 +138,10 @@ contract KuraCredit {
     }
 
     /// @notice Member views their own encrypted score.
+    /// Defensive isAllowed guard: only the member (who was granted allow) can read.
     function getMyScore() external view returns (euint64) {
         require(FHE.isInitialized(creditScores[msg.sender]), "No credit history");
+        require(FHE.isAllowed(creditScores[msg.sender], msg.sender), "Not permitted to read score");
         return creditScores[msg.sender];
     }
 
@@ -155,14 +166,56 @@ contract KuraCredit {
         return contributionCount[_member];
     }
 
-    /// @notice Return the plaintext tier index for a member (used by KuraCircle reputation gate).
+    /// @notice Return the plaintext tier index for a member.
+    /// Only the member themselves or an authorized verifier (e.g., KuraCircle) can query.
     /// 0=None, 1=Bronze, 2=Silver, 3=Gold, 4=Diamond
     function getMemberTier(address _member) external view returns (uint8) {
+        require(
+            msg.sender == _member || authorizedVerifiers[msg.sender],
+            "Not authorized: only member or verifier"
+        );
         uint256 score = contributionCount[_member] + (circlesCompleted[_member] * 5);
         if (score >= TIER_DIAMOND) return 4;
         if (score >= TIER_GOLD) return 3;
         if (score >= TIER_SILVER) return 2;
         if (score >= TIER_BRONZE) return 1;
         return 0;
+    }
+
+    /// @notice Returns the member's tier as an encrypted euint8 — only the member can decrypt.
+    /// Uses FHE.select chain so score threshold is never revealed.
+    /// 0=None, 1=Bronze, 2=Silver, 3=Gold, 4=Diamond
+    function getEncryptedTier(address _member) external returns (euint8) {
+        require(
+            msg.sender == _member || authorizedVerifiers[msg.sender],
+            "Not authorized: only member or verifier"
+        );
+        require(FHE.isInitialized(creditScores[_member]), "No credit history");
+
+        euint64 score = creditScores[_member];
+        euint64 enc5  = FHE.asEuint64(uint64(TIER_BRONZE));   // 5
+        euint64 enc15 = FHE.asEuint64(uint64(TIER_SILVER));   // 15
+        euint64 enc30 = FHE.asEuint64(uint64(TIER_GOLD));     // 30
+        euint64 enc50 = FHE.asEuint64(uint64(TIER_DIAMOND));  // 50
+        FHE.allowThis(enc5); FHE.allowThis(enc15); FHE.allowThis(enc30); FHE.allowThis(enc50);
+
+        // Tier select chain — never exposes score, only encrypted tier bucket
+        euint8 tier = FHE.select(
+            FHE.gte(score, enc50), FHE.asEuint8(4),
+            FHE.select(
+                FHE.gte(score, enc30), FHE.asEuint8(3),
+                FHE.select(
+                    FHE.gte(score, enc15), FHE.asEuint8(2),
+                    FHE.select(
+                        FHE.gte(score, enc5), FHE.asEuint8(1), FHE.asEuint8(0)
+                    )
+                )
+            )
+        );
+
+        FHE.allowThis(tier);
+        FHE.allow(tier, _member);
+        if (msg.sender != _member) FHE.allow(tier, msg.sender);
+        return tier;
     }
 }

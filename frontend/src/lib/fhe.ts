@@ -166,3 +166,98 @@ export async function decryptForTx(
   onStep?.("Complete");
   return result;
 }
+
+// ─── Wave 4: Additional encrypt helpers ──────────────────────────────────────
+
+export async function encryptUint8(
+  publicClient: PublicClient,
+  walletClient: WalletClient,
+  value: number,
+  onStep?: (step: string) => void
+) {
+  const c = await getFheClient(publicClient, walletClient);
+  const { Encryptable } = await import("@cofhe/sdk");
+  onStep?.("Initializing FHE");
+  const result = await c
+    .encryptInputs([Encryptable.uint8(value)])
+    .onStep((step: any) => onStep?.(String(step)))
+    .execute();
+  const item = result[0];
+  return { ...item, signature: item.signature as `0x${string}` };
+}
+
+export async function encryptBool(
+  publicClient: PublicClient,
+  walletClient: WalletClient,
+  value: boolean,
+  onStep?: (step: string) => void
+) {
+  const c = await getFheClient(publicClient, walletClient);
+  const { Encryptable } = await import("@cofhe/sdk");
+  onStep?.("Initializing FHE");
+  const result = await c
+    .encryptInputs([Encryptable.bool(value)])
+    .onStep((step: any) => onStep?.(String(step)))
+    .execute();
+  const item = result[0];
+  return { ...item, signature: item.signature as `0x${string}` };
+}
+
+export async function encryptAddress(
+  publicClient: PublicClient,
+  walletClient: WalletClient,
+  address: `0x${string}`,
+  onStep?: (step: string) => void
+) {
+  const c = await getFheClient(publicClient, walletClient);
+  const { Encryptable } = await import("@cofhe/sdk");
+  onStep?.("Initializing FHE");
+  const result = await c
+    .encryptInputs([Encryptable.address(address)])
+    .onStep((step: any) => onStep?.(String(step)))
+    .execute();
+  const item = result[0];
+  return { ...item, signature: item.signature as `0x${string}` };
+}
+
+export async function decryptForView_uint8(
+  publicClient: PublicClient,
+  walletClient: WalletClient,
+  ctHash: `0x${string}` | bigint,
+  onStep?: (step: string) => void
+): Promise<number> {
+  const c = await getFheClient(publicClient, walletClient);
+  const { FheTypes } = await import("@cofhe/sdk");
+  const handle = typeof ctHash === "string" ? BigInt(ctHash) : ctHash;
+  onStep?.("Creating permit");
+  await c.permits.getOrCreateSelfPermit();
+  onStep?.("Decrypting");
+  const result = (await c.decryptForView(handle, FheTypes.Uint8).execute()) as bigint;
+  onStep?.("Complete");
+  return Number(result);
+}
+
+export async function batchDecryptForView(
+  publicClient: PublicClient,
+  walletClient: WalletClient,
+  handles: Array<{ ctHash: `0x${string}` | bigint; type: "uint64" | "uint8" | "bool" }>,
+  onStep?: (step: string) => void
+): Promise<bigint[]> {
+  const c = await getFheClient(publicClient, walletClient);
+  const { FheTypes } = await import("@cofhe/sdk");
+  onStep?.("Creating permit");
+  await c.permits.getOrCreateSelfPermit();
+  onStep?.("Decrypting batch");
+
+  const results: bigint[] = [];
+  for (const { ctHash, type } of handles) {
+    const handle = typeof ctHash === "string" ? BigInt(ctHash) : ctHash;
+    const fheType =
+      type === "uint8" ? FheTypes.Uint8 : type === "bool" ? FheTypes.Bool : FheTypes.Uint64;
+    const r = (await c.decryptForView(handle, fheType).execute()) as bigint;
+    results.push(r);
+  }
+
+  onStep?.("Complete");
+  return results;
+}
