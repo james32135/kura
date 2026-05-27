@@ -44,10 +44,14 @@ export function useKuraStreamPay(circleId?: bigint) {
         address: KURA_STREAM_PAY_ADDRESS,
         abi: KURA_STREAM_PAY_ABI,
         functionName: "createStream",
-        args: [circleId, { ctHash: BigInt(encRate.ctHash), signature: encRate.signature }, maxBlocks],
+        args: [circleId, encRate, maxBlocks],
         gas: 2_000_000n,
         ...fees,
       });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "reverted") {
+        throw new Error(`createStream reverted on-chain (gasUsed: ${receipt.gasUsed})`);
+      }
       setStep("Stream created");
       return hash;
     } finally {
@@ -71,6 +75,10 @@ export function useKuraStreamPay(circleId?: bigint) {
         gas: 2_000_000n,
         ...fees,
       });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "reverted") {
+        throw new Error(`collectStream reverted on-chain (gasUsed: ${receipt.gasUsed})`);
+      }
       setStep("Done");
       return hash;
     } finally {
@@ -94,6 +102,10 @@ export function useKuraStreamPay(circleId?: bigint) {
         gas: 1_000_000n,
         ...fees,
       });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "reverted") {
+        throw new Error(`cancelStream reverted on-chain (gasUsed: ${receipt.gasUsed})`);
+      }
       setStep("Stream cancelled");
       return hash;
     } finally {

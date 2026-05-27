@@ -2708,7 +2708,7 @@ export const KURA_CREDIT_V2_ABI = [
 
 export const KURA_PRIVACY_VAULT_ABI = [
   { name: "initVault", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "isPrivate", type: "bool" }], outputs: [] },
-  { name: "storeMetadata", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "encNameChunks", type: "tuple[]", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }, { name: "encDescChunks", type: "tuple[]", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }], outputs: [] },
+  { name: "storeMetadata", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "encNameChunks", type: "tuple[]", components: [{ name: "ctHash", type: "uint256" }, { name: "securityZone", type: "uint8" }, { name: "utype", type: "uint8" }, { name: "signature", type: "bytes" }] }, { name: "encDescChunks", type: "tuple[]", components: [{ name: "ctHash", type: "uint256" }, { name: "securityZone", type: "uint8" }, { name: "utype", type: "uint8" }, { name: "signature", type: "bytes" }] }], outputs: [] },
   { name: "allowMemberToRead", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
   { name: "revokeMemberAccess", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
   { name: "getNameHandles", type: "function", stateMutability: "view", inputs: [{ name: "circleId", type: "uint256" }], outputs: [{ name: "", type: "uint256[]" }] },
@@ -2722,7 +2722,7 @@ export const KURA_PRIVACY_VAULT_ABI = [
 ] as const;
 
 export const KURA_STREAM_PAY_ABI = [
-  { name: "createStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "encRatePerBlock", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }, { name: "maxBlocks", type: "uint256" }], outputs: [] },
+  { name: "createStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "encRatePerBlock", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "securityZone", type: "uint8" }, { name: "utype", type: "uint8" }, { name: "signature", type: "bytes" }] }, { name: "maxBlocks", type: "uint256" }], outputs: [] },
   { name: "collectStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [] },
   { name: "cancelStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }], outputs: [] },
   { name: "hasActiveStream", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "member", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
@@ -2735,7 +2735,7 @@ export const KURA_STREAM_PAY_ABI = [
 ] as const;
 
 export const KURA_DISPUTE_RESOLUTION_ABI = [
-  { name: "raiseDispute", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "round", type: "uint256" }, { name: "encClaimedAmount", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }], outputs: [{ name: "disputeId", type: "uint256" }] },
+  { name: "raiseDispute", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "round", type: "uint256" }, { name: "encClaimedAmount", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "securityZone", type: "uint8" }, { name: "utype", type: "uint8" }, { name: "signature", type: "bytes" }] }], outputs: [{ name: "disputeId", type: "uint256" }] },
   { name: "checkDisputeValidity", type: "function", stateMutability: "nonpayable", inputs: [{ name: "disputeId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
   { name: "resolveDispute", type: "function", stateMutability: "nonpayable", inputs: [{ name: "disputeId", type: "uint256" }, { name: "approve", type: "bool" }], outputs: [] },
   { name: "getDisputeStatus", type: "function", stateMutability: "view", inputs: [{ name: "disputeId", type: "uint256" }], outputs: [{ name: "status", type: "uint8" }, { name: "circleId", type: "uint256" }, { name: "round", type: "uint256" }, { name: "claimant", type: "address" }, { name: "createdAt", type: "uint256" }] },
@@ -2748,7 +2748,7 @@ export const KURA_DISPUTE_RESOLUTION_ABI = [
 
 export const KURA_GOVERNANCE_ABI = [
   { name: "createProposal", type: "function", stateMutability: "nonpayable", inputs: [{ name: "circleId", type: "uint256" }, { name: "description", type: "string" }, { name: "duration", type: "uint256" }, { name: "quorum", type: "uint256" }], outputs: [{ name: "proposalId", type: "uint256" }] },
-  { name: "submitVote", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "encVote", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "signature", type: "bytes" }] }], outputs: [] },
+  { name: "submitVote", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "encVote", type: "tuple", components: [{ name: "ctHash", type: "uint256" }, { name: "securityZone", type: "uint8" }, { name: "utype", type: "uint8" }, { name: "signature", type: "bytes" }] }], outputs: [] },
   { name: "closeVote", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "yesCount", type: "uint64" }, { name: "totalVotes", type: "uint64" }, { name: "yesSig", type: "bytes" }, { name: "totalSig", type: "bytes" }], outputs: [] },
   { name: "verifyMajority", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }, { name: "threshold", type: "uint64" }], outputs: [{ name: "", type: "uint256" }] },
   { name: "cancelProposal", type: "function", stateMutability: "nonpayable", inputs: [{ name: "proposalId", type: "uint256" }], outputs: [] },

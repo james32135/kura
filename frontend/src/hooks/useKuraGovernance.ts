@@ -75,10 +75,14 @@ export function useKuraGovernance() {
         address: KURA_GOVERNANCE_ADDRESS,
         abi: KURA_GOVERNANCE_ABI,
         functionName: "submitVote",
-        args: [proposalId, { ctHash: BigInt(encVote.ctHash), signature: encVote.signature }],
+        args: [proposalId, encVote],
         gas: 1_000_000n,
         ...fees,
       });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "reverted") {
+        throw new Error(`submitVote reverted on-chain (gasUsed: ${receipt.gasUsed})`);
+      }
       setStep("Vote submitted");
       return hash;
     } finally {

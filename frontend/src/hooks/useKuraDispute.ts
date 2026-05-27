@@ -41,10 +41,14 @@ export function useKuraDispute() {
         address: KURA_DISPUTE_RESOLUTION_ADDRESS,
         abi: KURA_DISPUTE_RESOLUTION_ABI,
         functionName: "raiseDispute",
-        args: [circleId, round, { ctHash: BigInt(encAmount.ctHash), signature: encAmount.signature }],
+        args: [circleId, round, encAmount],
         gas: 2_000_000n,
         ...fees,
       });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "reverted") {
+        throw new Error(`raiseDispute reverted on-chain (gasUsed: ${receipt.gasUsed})`);
+      }
       setStep("Dispute raised");
       return hash;
     } finally {
