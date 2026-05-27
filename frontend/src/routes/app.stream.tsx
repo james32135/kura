@@ -70,9 +70,9 @@ function StreamPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       <AppHeader
-        icon={<Zap className="w-7 h-7 text-sky-400" />}
-        title="Stream Pay"
-        subtitle="Contribute per-block with encrypted rates — your payment cadence stays private."
+        eyebrow="Stream Pay"
+        title="Per-Block Contributions"
+        sub="Contribute per-block with encrypted rates — your payment cadence stays private."
       />
 
       {/* Pool stats */}
@@ -80,12 +80,12 @@ function StreamPage() {
         <StatCard
           label="Stream Pool (handle)"
           value={streamPool !== undefined ? `${streamPool.toString().slice(0, 10)}…` : "—"}
-          encrypted
+          icon={Zap}
         />
         <StatCard
           label="My Paid (handle)"
           value={myPaid !== undefined ? `${myPaid.toString().slice(0, 10)}…` : "—"}
-          encrypted
+          icon={ShieldCheck}
         />
       </div>
 

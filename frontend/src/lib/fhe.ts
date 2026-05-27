@@ -179,7 +179,7 @@ export async function encryptUint8(
   const { Encryptable } = await import("@cofhe/sdk");
   onStep?.("Initializing FHE");
   const result = await c
-    .encryptInputs([Encryptable.uint8(value)])
+    .encryptInputs([Encryptable.uint8(BigInt(value))])
     .onStep((step: any) => onStep?.(String(step)))
     .execute();
   const item = result[0];

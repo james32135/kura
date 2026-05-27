@@ -76,12 +76,12 @@ function GovernancePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       <AppHeader
-        icon={<Vote className="w-7 h-7 text-emerald-400" />}
-        title="Governance"
-        subtitle="Vote privately with encrypted ballots. Individual votes stay hidden — only the final tally is revealed."
+        eyebrow="Governance"
+        title="Encrypted Voting"
+        sub="Vote privately with encrypted ballots. Individual votes stay hidden — only the final tally is revealed."
       />
 
-      <StatCard label="Total Proposals" value={proposalCount?.toString() ?? "—"} />
+      <StatCard label="Total Proposals" value={proposalCount?.toString() ?? "—"} icon={Vote} />
 
       {/* Create proposal */}
       <section className="rounded-xl border border-white/10 bg-white/[0.02] p-6 space-y-4">

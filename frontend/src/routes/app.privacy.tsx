@@ -58,9 +58,9 @@ function PrivacyPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       <AppHeader
-        icon={<ShieldCheck className="w-7 h-7 text-violet-400" />}
-        title="Privacy Vault"
-        subtitle="Store and control access to encrypted circle metadata. Only members you authorize can read circle names and descriptions."
+        eyebrow="Privacy Vault"
+        title="Encrypted Metadata"
+        sub="Store and control access to encrypted circle metadata. Only members you authorize can read circle names and descriptions."
       />
 
       {/* Status */}
@@ -68,15 +68,17 @@ function PrivacyPage() {
         <StatCard
           label="Privacy Mode"
           value={isPrivate === undefined ? "—" : isPrivate ? "Private" : "Public"}
+          icon={EyeOff}
         />
         <StatCard
           label="Your Access"
           value={hasAccess === undefined ? "—" : hasAccess ? "Granted" : "None"}
+          icon={CheckCircle2}
         />
         <StatCard
           label="Metadata Chunks"
           value={metadataCounts ? `${metadataCounts[0]}n / ${metadataCounts[1]}d` : "—"}
-          encrypted
+          icon={ShieldCheck}
         />
       </div>
 

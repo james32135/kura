@@ -68,12 +68,12 @@ function DisputePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       <AppHeader
-        icon={<AlertTriangle className="w-7 h-7 text-amber-400" />}
-        title="Dispute Resolution"
-        subtitle="Raise disputes with encrypted claimed amounts. Admins resolve blind — they never see the amount you claimed."
+        eyebrow="Dispute Resolution"
+        title="Blind Disputes"
+        sub="Raise disputes with encrypted claimed amounts. Admins resolve blind — they never see the amount you claimed."
       />
 
-      <StatCard label="Total Disputes" value={disputeCount?.toString() ?? "—"} />
+      <StatCard label="Total Disputes" value={disputeCount?.toString() ?? "—"} icon={AlertTriangle} />
 
       {/* Raise dispute */}
       <section className="rounded-xl border border-white/10 bg-white/[0.02] p-6 space-y-4">

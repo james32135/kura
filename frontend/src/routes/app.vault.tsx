@@ -54,14 +54,15 @@ function VaultPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       <AppHeader
-        icon={<Database className="w-7 h-7 text-sky-400" />}
-        title="Member Registry"
-        subtitle="Encrypted membership slots — member addresses are stored as FHE-encrypted eaddress values. No public enumeration."
+        eyebrow="Member Registry"
+        title="Encrypted Slots"
+        sub="Encrypted membership slots — member addresses are stored as FHE-encrypted eaddress values. No public enumeration."
       />
 
       <StatCard
         label="Members in Circle"
         value={memberCount?.toString() ?? "—"}
+        icon={Users}
       />
 
       {/* Slot inspector */}
