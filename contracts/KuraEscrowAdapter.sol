@@ -150,8 +150,8 @@ contract KuraEscrowAdapter {
         ebool isWinner = FHE.eq(encryptedWinners[_circleId][_round], encCaller);
         FHE.allowThis(isWinner);
 
-        // Verify the decryption result: plaintext=1 (true) must match the ebool
-        FHE.verifyDecryptResult(isWinner, 1, _decryptSignature);
+        // Verify the decryption result: plaintext=true must match the ebool
+        require(FHE.verifyDecryptResult(isWinner, true, _decryptSignature), "Winner proof invalid");
 
         pe.claimed = true;
         confidentialEscrow.redeem(pe.escrowId);

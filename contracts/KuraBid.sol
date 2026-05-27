@@ -161,7 +161,8 @@ contract KuraBid {
     /// Returns 0 if not yet published. Use after publishDecryptResult is called.
     function getSettledBidAmount(uint256 _circleId, uint256 _round) external view returns (uint256) {
         if (!roundResults[_circleId][_round].resolved) return 0;
-        return FHE.getDecryptResultSafe(lowestBid[_circleId][_round]);
+        (uint64 result, ) = FHE.getDecryptResultSafe(lowestBid[_circleId][_round]);
+        return uint256(result);
     }
 
     /// @notice Returns the encrypted handle of the winning bidder address.

@@ -188,7 +188,7 @@ contract KuraCreditV2 {
         return 0;
     }
 
-    function getMyScore() external view returns (euint64) {
+    function getMyScore() external returns (euint64) {
         require(FHE.isInitialized(weightedScores[msg.sender]), "No score");
         require(FHE.isAllowed(weightedScores[msg.sender], msg.sender), "Not permitted");
         return weightedScores[msg.sender];

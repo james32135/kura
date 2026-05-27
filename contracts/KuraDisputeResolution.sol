@@ -121,7 +121,7 @@ contract KuraDisputeResolution {
     }
 
     /// @notice Claimant views their own encrypted claimed amount.
-    function getMyClaimedAmount(uint256 disputeId) external view returns (euint64) {
+    function getMyClaimedAmount(uint256 disputeId) external returns (euint64) {
         Dispute storage d = disputes[disputeId];
         require(msg.sender == d.claimant, "Not claimant");
         require(FHE.isAllowed(d.encClaimedAmount, msg.sender), "Not permitted");

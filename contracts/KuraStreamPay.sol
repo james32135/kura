@@ -186,7 +186,7 @@ contract KuraStreamPay {
     }
 
     /// @notice Member views their own encrypted paid amount.
-    function getMyPaid(uint256 circleId) external view returns (euint64) {
+    function getMyPaid(uint256 circleId) external returns (euint64) {
         require(streams[circleId][msg.sender].active, "No stream");
         require(
             FHE.isAllowed(streams[circleId][msg.sender].encPaid, msg.sender),

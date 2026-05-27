@@ -139,7 +139,7 @@ contract KuraCredit {
 
     /// @notice Member views their own encrypted score.
     /// Defensive isAllowed guard: only the member (who was granted allow) can read.
-    function getMyScore() external view returns (euint64) {
+    function getMyScore() external returns (euint64) {
         require(FHE.isInitialized(creditScores[msg.sender]), "No credit history");
         require(FHE.isAllowed(creditScores[msg.sender], msg.sender), "Not permitted to read score");
         return creditScores[msg.sender];

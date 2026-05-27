@@ -13,13 +13,13 @@ export const KURA_CONDITION_RESOLVER_ADDRESS = "0xA35d76dbbe380a75777F93C6773A20
 export const KURA_ESCROW_ADAPTER_ADDRESS = "0xaa9814c029302aA3d66C502D2210c456aC3c9aD8" as const;
 export const KURA_ROUND_ORDER_ADDRESS = "0x7204C03033ad8FfBAFfdE9313fd14cAF0Df7182a" as const;
 
-// KURA Protocol contracts — Wave 4 (fill in after running scripts/deployWave4.ts)
-export const KURA_MEMBER_REGISTRY_ADDRESS = "" as const;
-export const KURA_CREDIT_V2_ADDRESS = "" as const;
-export const KURA_PRIVACY_VAULT_ADDRESS = "" as const;
-export const KURA_STREAM_PAY_ADDRESS = "" as const;
-export const KURA_DISPUTE_RESOLUTION_ADDRESS = "" as const;
-export const KURA_GOVERNANCE_ADDRESS = "" as const;
+// KURA Protocol contracts — Wave 4 (deployed 2026-05-03 on Arbitrum Sepolia 421614)
+export const KURA_MEMBER_REGISTRY_ADDRESS = "0xE0408164FddD15adD420D8A5f9Ec8a8DA0F84708" as const;
+export const KURA_CREDIT_V2_ADDRESS = "0x5fBc73FBBD343132483710AEA444aE3AD778a339" as const;
+export const KURA_PRIVACY_VAULT_ADDRESS = "0x7c8B4B5eC17e0B641909ca686cA6E4F7e5967cA9" as const;
+export const KURA_STREAM_PAY_ADDRESS = "0x99dfa41b6614e170A46D1DEbB12fB7C6f9779b6f" as const;
+export const KURA_DISPUTE_RESOLUTION_ADDRESS = "0xB6c337d636e258A062eE7de44299d8d7C5B91C55" as const;
+export const KURA_GOVERNANCE_ADDRESS = "0xf5396b80498F84FFe6EAACdaA2eaD9DbC934ce96" as const;
 
 // ReineiraOS / external contracts
 export const CUSDC_ADDRESS = "0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f" as const;

@@ -54,9 +54,9 @@ contract KuraMemberRegistry {
         FHE.allowThis(found);
 
         for (uint256 i = 1; i < count; i++) {
-            ebool match = FHE.eq(_encMembers[circleId][i], encCandidate);
-            FHE.allowThis(match);
-            found = FHE.or(found, match);
+            ebool isMatch = FHE.eq(_encMembers[circleId][i], encCandidate);
+            FHE.allowThis(isMatch);
+            found = FHE.or(found, isMatch);
             FHE.allowThis(found);
         }
 
@@ -77,8 +77,26 @@ contract KuraMemberRegistry {
         return memberCount[circleId];
     }
 
+    /// @notice Encrypted random slot selection using FHE.rem.
+    /// Returns FHE.randomEuint8() % memberCount so callers can pick a blind member slot
+    /// for e.g. random audit selection or shuffle seeds — without revealing which slot.
+    /// FHE.rem op: remainder clamps the random value within [0, memberCount).
+    function getRandomSlotIndex(uint256 circleId) external returns (euint8) {
+        uint256 count = _encMembers[circleId].length;
+        require(count > 0, "No members");
+        require(count <= 255, "Circle too large for euint8 slot index");
+        euint8 rand = FHE.randomEuint8();
+        FHE.allowThis(rand);
+        euint8 encCount = FHE.asEuint8(uint8(count));
+        FHE.allowThis(encCount);
+        euint8 slot = FHE.rem(rand, encCount);   // FHE.rem — wrap into valid slot range
+        FHE.allowThis(slot);
+        FHE.allow(slot, msg.sender);
+        return slot;
+    }
+
     /// @notice Get encrypted member handle at a specific slot (for authorized callers).
-    function getEncMemberSlot(uint256 circleId, uint256 slotIndex) external view returns (eaddress) {
+    function getEncMemberSlot(uint256 circleId, uint256 slotIndex) external returns (eaddress) {
         require(slotIndex < _encMembers[circleId].length, "Invalid slot");
         require(
             FHE.isAllowed(_encMembers[circleId][slotIndex], msg.sender),

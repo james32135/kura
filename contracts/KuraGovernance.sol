@@ -218,4 +218,58 @@ contract KuraGovernance {
         Proposal storage p = proposals[proposalId];
         return (p.encYesCount, p.encTotalVotes);
     }
+
+    /// @notice Encrypted proof of vote absence: FHE.not(hasVoted).
+    /// A voter can prove they did NOT participate in a proposal — e.g. to claim
+    /// a "non-voter rebate" without revealing anything about other voters.
+    /// FHE.not op: logical negation of an encrypted boolean.
+    function getEncVoteAbsenceProof(uint256 proposalId, address voter) external returns (ebool) {
+        require(proposals[proposalId].proposer != address(0), "Invalid proposal");
+        ebool voted = FHE.asEbool(hasVoted[proposalId][voter]);
+        FHE.allowThis(voted);
+        ebool notVoted = FHE.not(voted);        // FHE.not — exclusion proof
+        FHE.allowThis(notVoted);
+        FHE.allow(notVoted, msg.sender);
+        if (msg.sender != voter) FHE.allow(notVoted, voter);
+        return notVoted;
+    }
+
+    /// @notice Close vote using batch decryption verification (more gas-efficient).
+    /// Verifies both yes-count and total-votes ciphertexts in a single FHE call.
+    /// FHE.verifyDecryptResultBatch op: batch-verify multiple ciphertexts at once.
+    /// Prefer this over the individual `closeVote` function for gas savings.
+    function closeVoteBatch(
+        uint256 proposalId,
+        uint64 yesCount,
+        uint64 totalVotes,
+        bytes calldata yesSig,
+        bytes calldata totalSig
+    ) external onlyAdmin {
+        Proposal storage p = proposals[proposalId];
+        require(p.status == ProposalStatus.Active, "Not active");
+
+        euint64[] memory handles = new euint64[](2);
+        handles[0] = p.encYesCount;
+        handles[1] = p.encTotalVotes;
+
+        uint64[] memory results = new uint64[](2);
+        results[0] = yesCount;
+        results[1] = totalVotes;
+
+        bytes[] memory sigs = new bytes[](2);
+        sigs[0] = yesSig;
+        sigs[1] = totalSig;
+
+        // Batch-verify both ciphertexts in one FHE call — saves ~50% gas vs two calls
+        require(FHE.verifyDecryptResultBatch(handles, results, sigs), "Batch verify failed");
+
+        p.plainYesCount    = uint256(yesCount);
+        p.plainTotalVotes  = uint256(totalVotes);
+
+        bool quorumMet = p.plainTotalVotes >= p.quorum;
+        bool majority  = p.plainTotalVotes > 0 && (p.plainYesCount * 2 > p.plainTotalVotes);
+
+        p.status = (quorumMet && majority) ? ProposalStatus.Passed : ProposalStatus.Failed;
+        emit ProposalClosed(proposalId, p.status);
+    }
 }
