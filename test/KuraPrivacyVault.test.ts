@@ -40,8 +40,8 @@ describe("KuraPrivacyVault", function () {
 
   it("stores encrypted metadata chunks", async function () {
     // Encode "KURA" = 4 bytes → 1 chunk (padded to 8 bytes)
-    const chunk1 = await cofheClient.encrypt_uint64(BigInt("0x4b5552410000000")); // "KURA\0\0\0\0"
-    const descChunk = await cofheClient.encrypt_uint64(BigInt("0x4865790000000000")); // "Hey\0\0\0\0\0"
+    const [chunk1] = await cofheClient.encryptInputs([Encryptable.uint64(BigInt("0x4b5552410000000"))]).execute(); // "KURA\0\0\0\0"
+    const [descChunk] = await cofheClient.encryptInputs([Encryptable.uint64(BigInt("0x4865790000000000"))]).execute(); // "Hey\0\0\0\0\0"
 
     await vault.connect(owner).storeMetadata(
       CIRCLE_ID,
@@ -58,7 +58,7 @@ describe("KuraPrivacyVault", function () {
 
   it("grants and revokes member access", async function () {
     // Need to store metadata first so FHE handles exist
-    const chunk = await cofheClient.encrypt_uint64(0n);
+    const [chunk] = await cofheClient.encryptInputs([Encryptable.uint64(0n)]).execute();
     await vault.connect(owner).storeMetadata(CIRCLE_ID, [chunk], [chunk]);
 
     // Grant member1 access
@@ -79,7 +79,7 @@ describe("KuraPrivacyVault", function () {
   // ─── getNameHandles / getDescHandles ─────────────────────────────────────
 
   it("admin can read name handles", async function () {
-    const chunk = await cofheClient.encrypt_uint64(0n);
+    const [chunk] = await cofheClient.encryptInputs([Encryptable.uint64(0n)]).execute();
     await vault.connect(owner).storeMetadata(CIRCLE_ID, [chunk], []);
 
     const handles = await vault.connect(owner).getNameHandles(CIRCLE_ID);
@@ -88,7 +88,7 @@ describe("KuraPrivacyVault", function () {
   });
 
   it("outsider cannot read handles without access", async function () {
-    const chunk = await cofheClient.encrypt_uint64(0n);
+    const [chunk] = await cofheClient.encryptInputs([Encryptable.uint64(0n)]).execute();
     await vault.connect(owner).storeMetadata(CIRCLE_ID, [chunk], []);
 
     await expect(vault.connect(outsider).getNameHandles(CIRCLE_ID))

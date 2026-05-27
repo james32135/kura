@@ -40,6 +40,11 @@ describe("KuraCredit", function () {
     // Also authorize owner directly for testing
     await kuraCredit.setAuthorized(owner.address, true);
 
+    // getMemberTier requires msg.sender == _member || authorizedVerifiers[msg.sender]
+    // authorized ≠ verifier — add owner and KuraCircle as verifiers
+    await kuraCredit.setVerifier(owner.address, true);
+    await kuraCredit.setVerifier(await kuraCircle.getAddress(), true);
+
     cofheClient = await hre.cofhe.createClientWithBatteries(owner);
   });
 
@@ -50,7 +55,7 @@ describe("KuraCredit", function () {
     await kuraCredit.recordContribution(member1.address);
 
     // Check score = 3
-    const scoreHandle = await kuraCredit.connect(member1).getMyScore();
+    const scoreHandle = await kuraCredit.connect(member1).getMyScore.staticCall();
     await hre.cofhe.mocks.expectPlaintext(scoreHandle, 3n);
 
     // Public count should also be 3

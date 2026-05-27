@@ -40,6 +40,10 @@ describe("KuraCircle", function () {
     // Also authorize admin for direct test calls
     await kuraCredit.setAuthorized(admin.address, true);
 
+    // getMemberTier requires authorizedVerifiers — add KuraCircle and admin as verifiers
+    await kuraCredit.setVerifier(await kuraCircle.getAddress(), true);
+    await kuraCredit.setVerifier(admin.address, true);
+
     // Create cofhe client for encryption
     cofheClient = await hre.cofhe.createClientWithBatteries(admin);
   });

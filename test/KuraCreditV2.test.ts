@@ -4,88 +4,105 @@ import hre, { ethers } from "hardhat";
 describe("KuraCreditV2", function () {
   let creditV2: any;
   let owner: any;
-  let kuraCircle: any;  // acting as authorized kuraCircle
+  let kuraCircle: any;  // acting as authorized caller
   let member1: any;
-  let member2: any;
   let outsider: any;
   let cofheClient: any;
 
-  const CIRCLE_ID = 1n;
+  const NO_WEIGHT_CIRCLE = 99n;  // circle with no explicit weight → default 1x increment
 
   beforeEach(async function () {
-    [owner, kuraCircle, member1, member2, outsider] = await ethers.getSigners();
+    [owner, kuraCircle, member1, outsider] = await ethers.getSigners();
 
     const KuraCreditV2 = await ethers.getContractFactory("KuraCreditV2");
-    creditV2 = await KuraCreditV2.deploy(kuraCircle.address);
+    creditV2 = await KuraCreditV2.deploy();          // no-arg constructor
     await creditV2.waitForDeployment();
+
+    // kuraCircle is authorized to call recordContributionWeighted
+    await creditV2.setAuthorized(kuraCircle.address, true);
+    // kuraCircle is also a verifier so it can call getSquaredScore / getEncryptedTier / verifyTierInRange
+    await creditV2.setVerifier(kuraCircle.address, true);
 
     cofheClient = await hre.cofhe.createClientWithBatteries(owner);
   });
 
-  // ─── FHE.add: recordContribution ─────────────────────────────────────────
+  // ─── FHE.add: recordContributionWeighted (no circle weight → 1x) ─────────
 
-  it("should increment encrypted score on recordContribution", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 10n);
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 10n);
+  it("should increment encrypted score on recordContributionWeighted", async function () {
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE);
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE);
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE);
 
-    // getMyScore uses FHE.isAllowed (non-view)
-    const handle = await creditV2.connect(member1).getMyScore();
-    await hre.cofhe.mocks.expectPlaintext(handle, 20n);
+    // getMyScore returns the stored handle — use staticCall to get it without sending a tx
+    const handle = await creditV2.connect(member1).getMyScore.staticCall();
+    await hre.cofhe.mocks.expectPlaintext(handle, 3n);
   });
 
-  // ─── FHE.mul + FHE.div: computeWeightedScore ─────────────────────────────
+  // ─── FHE.mul + FHE.div: weighted contribution (circleWeight 200 bps = 2x) ─
 
-  it("computeWeightedScore applies weight × score / 100", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 50n);
-    // weight 50 %, score 50 → weighted = 50*50/100 = 25
-    const result = await creditV2.connect(kuraCircle).computeWeightedScore(member1.address, 50n);
-    await hre.cofhe.mocks.expectPlaintext(result, 25n);
+  it("weighted contribution applies weight × 1 / 100", async function () {
+    // weight 200 bps = 2x; one contribution → score += (1 × 200) / 100 = 2
+    await creditV2.setCircleWeight(1n, 200n);
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, 1n);
+
+    const handle = await creditV2.connect(member1).getMyScore.staticCall();
+    await hre.cofhe.mocks.expectPlaintext(handle, 2n);
   });
 
   // ─── FHE.square: getSquaredScore ─────────────────────────────────────────
 
   it("getSquaredScore returns score²", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 4n);
-    const result = await creditV2.connect(member1).getSquaredScore(member1.address);
-    await hre.cofhe.mocks.expectPlaintext(result, 16n);
+    // score = 2 (one contribution at 2x weight); squared = 4
+    await creditV2.setCircleWeight(1n, 200n);
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, 1n);
+
+    // getSquaredScore creates a new handle → staticCall-first pattern
+    const handle = await creditV2.connect(member1).getSquaredScore.staticCall(member1.address);
+    await creditV2.connect(member1).getSquaredScore(member1.address);  // persist in mock storage
+    await hre.cofhe.mocks.expectPlaintext(handle, 4n);
   });
 
-  // ─── FHE.and: verifyTierInRange ──────────────────────────────────────────
+  // ─── FHE.and + FHE.gte + FHE.lte: verifyTierInRange ─────────────────────
 
-  it("verifyTierInRange returns true when score within [lo, hi]", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 5n);
-    // score = 5, range [2, 8] → should be true
-    const result = await creditV2.connect(kuraCircle).verifyTierInRange(member1.address, 2n, 8n);
-    await hre.cofhe.mocks.expectPlaintext(result, 1n);
+  it("verifyTierInRange returns true when score is in tier range", async function () {
+    // One contribution → score = 1 (tier 0, None)
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE);
+
+    // Tier 0 range: score ∈ [0, 4]. Score = 1 → should be true
+    const handle = await creditV2.connect(member1).verifyTierInRange.staticCall(member1.address, 0, 0);
+    await creditV2.connect(member1).verifyTierInRange(member1.address, 0, 0);
+    await hre.cofhe.mocks.expectPlaintext(handle, 1n);
   });
 
-  it("verifyTierInRange returns false when score out of range", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 10n);
-    // score = 10, range [2, 8] → false
-    const result = await creditV2.connect(kuraCircle).verifyTierInRange(member1.address, 2n, 8n);
-    await hre.cofhe.mocks.expectPlaintext(result, 0n);
+  it("verifyTierInRange returns false when score is out of range", async function () {
+    // One contribution → score = 1, tier 0. Bronze range [5, 29].
+    await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE);
+
+    // Checking tier 1–2 (Bronze–Silver): minThreshold=5, maxThreshold=29. Score 1 < 5 → false
+    const handle = await creditV2.connect(member1).verifyTierInRange.staticCall(member1.address, 1, 2);
+    await creditV2.connect(member1).verifyTierInRange(member1.address, 1, 2);
+    await hre.cofhe.mocks.expectPlaintext(handle, 0n);
   });
 
-  // ─── FHE.allowSender + FHE.isAllowed: getEncryptedTier ───────────────────
+  // ─── FHE.select chain: getEncryptedTier ──────────────────────────────────
 
-  it("getEncryptedTier requires allowSender first", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 3n);
-    // Without allowSender, isAllowed guard should reject
-    await expect(creditV2.connect(member1).getEncryptedTier(member1.address)).to.be.reverted;
-  });
+  it("getEncryptedTier returns correct tier handle", async function () {
+    // 5 contributions at 1x → score = 5 → tier 1 (Bronze)
+    for (let i = 0; i < 5; i++) {
+      await creditV2.connect(kuraCircle).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE);
+    }
 
-  it("getEncryptedTier returns tier handle after allowSender", async function () {
-    await creditV2.connect(kuraCircle).recordContribution(member1.address, 3n);
-    await creditV2.connect(member1).allowMeTier(member1.address);
-    const tier = await creditV2.connect(member1).getEncryptedTier(member1.address);
-    expect(tier).to.not.equal(0n);
+    // getEncryptedTier creates new handles → staticCall-first pattern
+    const handle = await creditV2.connect(member1).getEncryptedTier.staticCall(member1.address);
+    await creditV2.connect(member1).getEncryptedTier(member1.address);  // persist
+    await hre.cofhe.mocks.expectPlaintext(handle, 1n);  // tier 1 = Bronze
   });
 
   // ─── Access control ──────────────────────────────────────────────────────
 
-  it("only kuraCircle can call recordContribution", async function () {
+  it("only authorized callers can call recordContributionWeighted", async function () {
     await expect(
-      creditV2.connect(outsider).recordContribution(member1.address, 5n)
-    ).to.be.revertedWith("Not KuraCircle");
+      creditV2.connect(outsider).recordContributionWeighted(member1.address, NO_WEIGHT_CIRCLE)
+    ).to.be.revertedWith("Not authorized");
   });
 });
