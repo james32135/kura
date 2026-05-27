@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
-import { Zap, Loader2, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
+import { Zap, Loader2, CheckCircle2, ShieldCheck, XCircle, Wallet } from "lucide-react";
 import { AppHeader, StatCard } from "@/components/app/AppPrimitives";
 import { useAccount } from "wagmi";
 import { useKuraStreamPay } from "@/hooks/useKuraStreamPay";
+import { useConfidentialUSDC } from "@/hooks/useConfidentialUSDC";
 import { useCircle } from "@/context/CircleContext";
+import { formatUnits } from "viem";
 
 export const Route = createFileRoute("/app/stream")({
   component: StreamPage,
@@ -15,13 +17,61 @@ function StreamPage() {
   const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
   const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
-  const { loading, step, streamPool, myPaid, createStream, collectStream, cancelStream } =
+  const { loading: streamLoading, step: streamStep, streamPool, myPaid, createStream, collectStream, cancelStream } =
     useKuraStreamPay(cId);
+  const {
+    usdcBalance,
+    isStreamPayOperator,
+    wrapUsdc,
+    setKuraStreamPayOperator,
+    getEncryptedBalance,
+    loading: usdcLoading,
+    step: usdcStep,
+  } = useConfidentialUSDC();
 
-  const [rateInput, setRateInput] = useState("10");
-  const [blocksInput, setBlocksInput] = useState("100");
+  const loading = streamLoading || usdcLoading;
+  const step = streamStep || usdcStep;
+  const streamOperatorSet = isStreamPayOperator === true;
+
+  const [rateInput, setRateInput] = useState("0.001");
+  const [blocksInput, setBlocksInput] = useState("10");
+  const [wrapAmount, setWrapAmount] = useState("0.05");
+  const [cusdcBalance, setCusdcBalance] = useState<string | null>(null);
   const [txHash, setTxHash] = useState("");
   const [error, setError] = useState("");
+
+  const handleWrap = useCallback(async () => {
+    setError("");
+    setTxHash("");
+    try {
+      const value = BigInt(Math.round(Number(wrapAmount) * 1e6));
+      const hash = await wrapUsdc(value);
+      setTxHash(hash as string);
+    } catch (e: any) {
+      setError(e.message ?? "Unknown error");
+    }
+  }, [wrapAmount, wrapUsdc]);
+
+  const handleAuthorize = useCallback(async () => {
+    setError("");
+    setTxHash("");
+    try {
+      const hash = await setKuraStreamPayOperator();
+      setTxHash(hash as string);
+    } catch (e: any) {
+      setError(e.message ?? "Unknown error");
+    }
+  }, [setKuraStreamPayOperator]);
+
+  const handleRevealBalance = useCallback(async () => {
+    setError("");
+    try {
+      const value = await getEncryptedBalance();
+      setCusdcBalance(formatUnits(value, 6));
+    } catch (e: any) {
+      setError(e.message ?? "Unknown error");
+    }
+  }, [getEncryptedBalance]);
 
   const handleCreate = useCallback(async () => {
     setError("");
@@ -86,7 +136,62 @@ function StreamPage() {
           value={myPaid !== undefined ? `${myPaid.toString().slice(0, 10)}…` : "—"}
           icon={ShieldCheck}
         />
+        <StatCard
+          label="Stream Authorized"
+          value={streamOperatorSet ? "Yes" : "Not yet"}
+          icon={ShieldCheck}
+          accent={streamOperatorSet}
+        />
+        <StatCard
+          label="Your USDC"
+          value={`$${formatUnits(usdcBalance ?? 0n, 6)}`}
+          icon={Wallet}
+        />
       </div>
+
+      <section className="rounded-xl border border-white/10 bg-white/[0.02] p-6 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-400">Prepare Stream Balance</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-zinc-500 mb-1 block">Wrap amount (USDC)</label>
+            <input
+              type="number"
+              value={wrapAmount}
+              onChange={e => setWrapAmount(e.target.value)}
+              className="w-full rounded-lg bg-zinc-900 border border-white/10 px-3 py-2 text-sm text-white"
+              min="0.000001"
+              step="0.01"
+            />
+          </div>
+          <div className="rounded-lg bg-zinc-900/60 border border-white/5 px-3 py-2">
+            <p className="text-xs text-zinc-500">cUSDC balance</p>
+            <button
+              onClick={handleRevealBalance}
+              disabled={loading}
+              className="mt-1 text-sm text-sky-300 hover:underline disabled:opacity-40"
+            >
+              {cusdcBalance === null ? "Reveal encrypted balance" : `$${cusdcBalance}`}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={handleWrap}
+            disabled={loading || !wrapAmount}
+            className="py-2.5 rounded-lg border border-sky-500/40 text-sky-300 text-sm hover:bg-sky-500/10 transition disabled:opacity-40"
+          >
+            {loading ? step : "Wrap USDC to cUSDC"}
+          </button>
+          <button
+            onClick={handleAuthorize}
+            disabled={loading || streamOperatorSet}
+            className="py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            {streamOperatorSet ? "Stream Pay Authorized" : loading ? step : "Authorize Stream Pay"}
+          </button>
+        </div>
+      </section>
 
       {/* Create stream */}
       <section className="rounded-xl border border-white/10 bg-white/[0.02] p-6 space-y-4">
@@ -116,7 +221,7 @@ function StreamPage() {
         </div>
         <button
           onClick={handleCreate}
-          disabled={loading || !hasSelectedCircle}
+          disabled={loading || !hasSelectedCircle || !streamOperatorSet || !rateInput || !blocksInput}
           className="w-full py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}

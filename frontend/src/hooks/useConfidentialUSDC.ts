@@ -5,6 +5,7 @@ import {
   CUSDC_ADDRESS, CUSDC_ABI,
   USDC_ADDRESS, USDC_ABI,
   KURA_CIRCLE_ADDRESS,
+  KURA_STREAM_PAY_ADDRESS,
 } from "@/config/contracts";
 import { decryptForView } from "@/lib/fhe";
 import { getGasFees } from "@/lib/utils";
@@ -46,6 +47,14 @@ export function useConfidentialUSDC() {
     abi: CUSDC_ABI,
     functionName: "isOperator",
     args: address ? [address, KURA_CIRCLE_ADDRESS] : undefined,
+    query: { refetchInterval: 5_000 },
+  });
+
+  const { data: isStreamPayOperator, refetch: refetchStreamPayOperator } = useReadContract({
+    address: CUSDC_ADDRESS,
+    abi: CUSDC_ABI,
+    functionName: "isOperator",
+    args: address ? [address, KURA_STREAM_PAY_ADDRESS] : undefined,
     query: { refetchInterval: 5_000 },
   });
 
@@ -234,6 +243,48 @@ export function useConfidentialUSDC() {
     [address, writeContractAsync, refetchOperator, publicClient]
   );
 
+  const setKuraStreamPayOperator = useCallback(
+    async () => {
+      if (!address) throw new Error("Wallet not connected");
+      setLoading(true);
+      setStep("Setting Stream Pay as operator on cUSDC...");
+      try {
+        let lastErr: any;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            setStep(attempt > 0 ? `Retrying stream operator (${attempt + 1}/3)...` : "Setting Stream Pay as operator on cUSDC...");
+            const fees = publicClient ? await getGasFees(publicClient) : {};
+            const hash = await writeContractAsync({
+              address: CUSDC_ADDRESS,
+              abi: CUSDC_ABI,
+              functionName: "setOperator",
+              args: [KURA_STREAM_PAY_ADDRESS, OPERATOR_UNTIL_MAX],
+              gas: 500_000n,
+              ...fees,
+            });
+            setStep("Stream Pay authorized.");
+            await refetchStreamPayOperator();
+            return hash;
+          } catch (err: any) {
+            lastErr = err;
+            const msg = (err?.message || "").toLowerCase();
+            if (msg.includes("rate limit")) {
+              const wait = 5000 * (attempt + 1);
+              setStep(`Rate limited — retrying in ${wait / 1000}s...`);
+              await delay(wait);
+            } else {
+              throw err;
+            }
+          }
+        }
+        throw lastErr;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [address, writeContractAsync, refetchStreamPayOperator, publicClient]
+  );
+
   /// @notice View own encrypted cUSDC balance (decrypt with FHE).
   const getEncryptedBalance = useCallback(
     async () => {
@@ -268,15 +319,18 @@ export function useConfidentialUSDC() {
     usdcBalance: usdcBalance as bigint | undefined,
     usdcAllowance: usdcAllowance as bigint | undefined,
     isCircleOperator: isCircleOperator as boolean | undefined,
+    isStreamPayOperator: isStreamPayOperator as boolean | undefined,
     approveUsdc,
     wrapUsdc,
     unwrapCusdc,
     claimUnwrapped,
     setKuraCircleOperator,
+    setKuraStreamPayOperator,
     getEncryptedBalance,
     loading,
     step,
     refetchUsdcBalance,
     refetchOperator,
+    refetchStreamPayOperator,
   };
 }
