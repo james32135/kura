@@ -27,10 +27,10 @@ function GovernancePage() {
 
   // Load proposals
   useEffect(() => {
-    if (!proposalCount) return;
+    if (proposalCount === undefined || proposalCount === 0n) return;
     const loadProposals = async () => {
       const list = [];
-      for (let i = 0n; i < proposalCount; i++) {
+      for (let i = 1n; i <= proposalCount; i++) {
         try {
           const data = await getProposal(i);
           const voted = await hasVoted(i);

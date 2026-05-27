@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AlertTriangle, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { AppHeader, StatCard } from "@/components/app/AppPrimitives";
 import { useAccount } from "wagmi";
 import { useKuraDispute } from "@/hooks/useKuraDispute";
 import { useCircle } from "@/context/CircleContext";
+import { useKuraCircle } from "@/hooks/useKuraCircle";
 
 export const Route = createFileRoute("/app/dispute")({
   component: DisputePage,
@@ -15,15 +16,23 @@ function DisputePage() {
   const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
   const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
+  const { circleInfo } = useKuraCircle(cId);
   const { loading, step, disputeCount, raiseDispute, resolveDispute, getDisputeStatus } =
     useKuraDispute();
 
-  const [round, setRound] = useState("0");
+  const info = circleInfo as readonly [string, bigint, bigint, bigint, bigint, boolean, bigint, boolean] | undefined;
+  const activeRound = info ? info[3].toString() : undefined;
+
+  const [round, setRound] = useState("1");
   const [amount, setAmount] = useState("0");
   const [lookupId, setLookupId] = useState("");
   const [disputeInfo, setDisputeInfo] = useState<any>(null);
   const [txHash, setTxHash] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (activeRound) setRound(activeRound);
+  }, [activeRound]);
 
   const handleRaise = useCallback(async () => {
     setError("");
