@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { usePublicClient, useWalletClient, useWriteContract, useReadContract, useAccount } from "wagmi";
 import { KURA_DISPUTE_RESOLUTION_ADDRESS, KURA_DISPUTE_RESOLUTION_ABI } from "@/config/contracts";
 import { encryptUint64 } from "@/lib/fhe";
+import { getGasFees } from "@/lib/utils";
 
 export type DisputeStatus = "Open" | "Approved" | "Rejected";
 
@@ -35,11 +36,14 @@ export function useKuraDispute() {
     try {
       const encAmount = await encryptUint64(publicClient, walletClient, claimedAmount, setStep);
       setStep("Submitting dispute...");
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_DISPUTE_RESOLUTION_ADDRESS,
         abi: KURA_DISPUTE_RESOLUTION_ABI,
         functionName: "raiseDispute",
         args: [circleId, round, { ctHash: BigInt(encAmount.ctHash), signature: encAmount.signature }],
+        gas: 2_000_000n,
+        ...fees,
       });
       setStep("Dispute raised");
       return hash;
@@ -50,23 +54,26 @@ export function useKuraDispute() {
 
   /** Resolve dispute (admin only) */
   const resolveDispute = useCallback(async (disputeId: bigint, approve: boolean) => {
-    if (!address) throw new Error("Wallet not connected");
+    if (!address || !publicClient) throw new Error("Wallet not connected");
     if (!KURA_DISPUTE_RESOLUTION_ADDRESS) throw new Error("KuraDisputeResolution not deployed yet");
     setLoading(true);
     setStep(approve ? "Approving dispute..." : "Rejecting dispute...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_DISPUTE_RESOLUTION_ADDRESS,
         abi: KURA_DISPUTE_RESOLUTION_ABI,
         functionName: "resolveDispute",
         args: [disputeId, approve],
+        gas: 500_000n,
+        ...fees,
       });
       setStep("Done");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, writeContractAsync]);
+  }, [address, publicClient, writeContractAsync]);
 
   /** Get dispute info */
   const getDisputeStatus = useCallback(async (disputeId: bigint) => {

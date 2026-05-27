@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { usePublicClient, useWalletClient, useWriteContract, useReadContract, useAccount } from "wagmi";
 import { KURA_PRIVACY_VAULT_ADDRESS, KURA_PRIVACY_VAULT_ABI } from "@/config/contracts";
+import { getGasFees } from "@/lib/utils";
 
 export function useKuraPrivacyVault(circleId?: bigint) {
   const publicClient = usePublicClient();
@@ -36,16 +37,19 @@ export function useKuraPrivacyVault(circleId?: bigint) {
 
   /** Initialize vault for a circle (admin only) */
   const initVault = useCallback(async (isPrivateCircle: boolean) => {
-    if (!address || circleId === undefined) throw new Error("Wallet not connected");
+    if (!address || !publicClient || circleId === undefined) throw new Error("Wallet not connected");
     if (!KURA_PRIVACY_VAULT_ADDRESS) throw new Error("KuraPrivacyVault not deployed yet");
     setLoading(true);
     setStep("Initializing vault...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_PRIVACY_VAULT_ADDRESS,
         abi: KURA_PRIVACY_VAULT_ABI,
         functionName: "initVault",
         args: [circleId, isPrivateCircle],
+        gas: 500_000n,
+        ...fees,
       });
       setStep("Done");
       await refetchPrivacy();
@@ -53,27 +57,30 @@ export function useKuraPrivacyVault(circleId?: bigint) {
     } finally {
       setLoading(false);
     }
-  }, [address, circleId, writeContractAsync, refetchPrivacy]);
+  }, [address, publicClient, circleId, writeContractAsync, refetchPrivacy]);
 
   /** Grant member read access to encrypted metadata */
   const grantAccess = useCallback(async (member: `0x${string}`) => {
-    if (!address || circleId === undefined) throw new Error("Wallet not connected");
+    if (!address || !publicClient || circleId === undefined) throw new Error("Wallet not connected");
     if (!KURA_PRIVACY_VAULT_ADDRESS) throw new Error("KuraPrivacyVault not deployed yet");
     setLoading(true);
     setStep("Granting metadata access...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_PRIVACY_VAULT_ADDRESS,
         abi: KURA_PRIVACY_VAULT_ABI,
         functionName: "allowMemberToRead",
         args: [circleId, member],
+        gas: 500_000n,
+        ...fees,
       });
       setStep("Done");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, circleId, writeContractAsync]);
+  }, [address, publicClient, circleId, writeContractAsync]);
 
   /** Get name handles (requires hasAccess) */
   const getNameHandles = useCallback(async (): Promise<bigint[]> => {

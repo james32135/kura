@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { usePublicClient, useWalletClient, useWriteContract, useReadContract, useAccount } from "wagmi";
 import { KURA_STREAM_PAY_ADDRESS, KURA_STREAM_PAY_ABI } from "@/config/contracts";
 import { encryptUint64 } from "@/lib/fhe";
+import { getGasFees } from "@/lib/utils";
 
 export function useKuraStreamPay(circleId?: bigint) {
   const publicClient = usePublicClient();
@@ -38,11 +39,14 @@ export function useKuraStreamPay(circleId?: bigint) {
     try {
       const encRate = await encryptUint64(publicClient, walletClient, ratePerBlock, setStep);
       setStep("Creating stream...");
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_STREAM_PAY_ADDRESS,
         abi: KURA_STREAM_PAY_ABI,
         functionName: "createStream",
         args: [circleId, { ctHash: BigInt(encRate.ctHash), signature: encRate.signature }, maxBlocks],
+        gas: 2_000_000n,
+        ...fees,
       });
       setStep("Stream created");
       return hash;
@@ -53,43 +57,49 @@ export function useKuraStreamPay(circleId?: bigint) {
 
   /** Collect accrued stream payment for a member */
   const collectStream = useCallback(async (member: `0x${string}`) => {
-    if (!address || circleId === undefined) throw new Error("Wallet not connected");
+    if (!address || !publicClient || circleId === undefined) throw new Error("Wallet not connected");
     if (!KURA_STREAM_PAY_ADDRESS) throw new Error("KuraStreamPay not deployed yet");
     setLoading(true);
     setStep("Collecting stream...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_STREAM_PAY_ADDRESS,
         abi: KURA_STREAM_PAY_ABI,
         functionName: "collectStream",
         args: [circleId, member],
+        gas: 2_000_000n,
+        ...fees,
       });
       setStep("Done");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, circleId, writeContractAsync]);
+  }, [address, publicClient, circleId, writeContractAsync]);
 
   /** Cancel active stream and get refund of remaining locked balance */
   const cancelStream = useCallback(async () => {
-    if (!address || circleId === undefined) throw new Error("Wallet not connected");
+    if (!address || !publicClient || circleId === undefined) throw new Error("Wallet not connected");
     if (!KURA_STREAM_PAY_ADDRESS) throw new Error("KuraStreamPay not deployed yet");
     setLoading(true);
     setStep("Cancelling stream...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_STREAM_PAY_ADDRESS,
         abi: KURA_STREAM_PAY_ABI,
         functionName: "cancelStream",
         args: [circleId],
+        gas: 1_000_000n,
+        ...fees,
       });
       setStep("Stream cancelled");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, circleId, writeContractAsync]);
+  }, [address, publicClient, circleId, writeContractAsync]);
 
   return {
     loading,

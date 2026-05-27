@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { usePublicClient, useWalletClient, useWriteContract, useReadContract, useAccount } from "wagmi";
 import { KURA_GOVERNANCE_ADDRESS, KURA_GOVERNANCE_ABI } from "@/config/contracts";
 import { encryptBool } from "@/lib/fhe";
+import { getGasFees } from "@/lib/utils";
 
 export type ProposalStatus = "Active" | "Passed" | "Failed" | "Cancelled";
 const STATUS_LABELS: ProposalStatus[] = ["Active", "Passed", "Failed", "Cancelled"];
@@ -39,23 +40,26 @@ export function useKuraGovernance() {
     durationSeconds: bigint,
     quorum: bigint
   ) => {
-    if (!address) throw new Error("Wallet not connected");
+    if (!address || !publicClient) throw new Error("Wallet not connected");
     if (!KURA_GOVERNANCE_ADDRESS) throw new Error("KuraGovernance not deployed yet");
     setLoading(true);
     setStep("Creating proposal...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_GOVERNANCE_ADDRESS,
         abi: KURA_GOVERNANCE_ABI,
         functionName: "createProposal",
         args: [circleId, description, durationSeconds, quorum],
+        gas: 1_000_000n,
+        ...fees,
       });
       setStep("Proposal created");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, writeContractAsync]);
+  }, [address, publicClient, writeContractAsync]);
 
   /** Submit an encrypted vote (true = yes, false = no) */
   const submitVote = useCallback(async (proposalId: bigint, vote: boolean) => {
@@ -66,11 +70,14 @@ export function useKuraGovernance() {
     try {
       const encVote = await encryptBool(publicClient, walletClient, vote, setStep);
       setStep("Submitting vote...");
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_GOVERNANCE_ADDRESS,
         abi: KURA_GOVERNANCE_ABI,
         functionName: "submitVote",
         args: [proposalId, { ctHash: BigInt(encVote.ctHash), signature: encVote.signature }],
+        gas: 1_000_000n,
+        ...fees,
       });
       setStep("Vote submitted");
       return hash;
@@ -117,23 +124,26 @@ export function useKuraGovernance() {
 
   /** Cancel a proposal (proposer only) */
   const cancelProposal = useCallback(async (proposalId: bigint) => {
-    if (!address) throw new Error("Wallet not connected");
+    if (!address || !publicClient) throw new Error("Wallet not connected");
     if (!KURA_GOVERNANCE_ADDRESS) throw new Error("KuraGovernance not deployed yet");
     setLoading(true);
     setStep("Cancelling proposal...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_GOVERNANCE_ADDRESS,
         abi: KURA_GOVERNANCE_ABI,
         functionName: "cancelProposal",
         args: [proposalId],
+        gas: 500_000n,
+        ...fees,
       });
       setStep("Cancelled");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, writeContractAsync]);
+  }, [address, publicClient, writeContractAsync]);
 
   return {
     loading,

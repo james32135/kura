@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { usePublicClient, useWalletClient, useWriteContract, useReadContract, useAccount } from "wagmi";
 import { KURA_MEMBER_REGISTRY_ADDRESS, KURA_MEMBER_REGISTRY_ABI } from "@/config/contracts";
+import { getGasFees } from "@/lib/utils";
 
 export function useKuraMemberRegistry(circleId?: bigint) {
   const publicClient = usePublicClient();
@@ -20,23 +21,26 @@ export function useKuraMemberRegistry(circleId?: bigint) {
 
   /** Grant self-read access to your own encrypted membership slot */
   const allowSelf = useCallback(async (slotIndex: bigint) => {
-    if (!address || !walletClient || circleId === undefined) throw new Error("Wallet not connected");
+    if (!address || !publicClient || !walletClient || circleId === undefined) throw new Error("Wallet not connected");
     if (!KURA_MEMBER_REGISTRY_ADDRESS) throw new Error("KuraMemberRegistry not deployed yet");
     setLoading(true);
     setStep("Granting self access to membership slot...");
     try {
+      const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
         address: KURA_MEMBER_REGISTRY_ADDRESS,
         abi: KURA_MEMBER_REGISTRY_ABI,
         functionName: "allowMemberSelf",
         args: [circleId, slotIndex],
+        gas: 500_000n,
+        ...fees,
       });
       setStep("Done");
       return hash;
     } finally {
       setLoading(false);
     }
-  }, [address, walletClient, circleId, writeContractAsync]);
+  }, [address, publicClient, walletClient, circleId, writeContractAsync]);
 
   /** Read an encrypted member slot handle (requires prior allowMemberSelf call) */
   const getEncMemberSlot = useCallback(async (slotIndex: bigint) => {
