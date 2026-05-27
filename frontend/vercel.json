@@ -5,6 +5,8 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "rewrites": [
+    { "source": "/storage-hub.html", "destination": "https://iframe-shared-storage.vercel.app/hub.html" },
+    { "source": "/dist/browser.js", "destination": "https://iframe-shared-storage.vercel.app/dist/browser.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -12,7 +14,7 @@
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     },

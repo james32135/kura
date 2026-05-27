@@ -4,6 +4,30 @@ import type { PublicClient, WalletClient } from "viem";
 let client: CofheClient | null = null;
 let connectPromise: Promise<CofheClient> | null = null;
 let connectedAccount: string | null = null;
+let storageHubRedirectInstalled = false;
+
+const COFHE_STORAGE_HUB_URL = "https://iframe-shared-storage.vercel.app/hub.html";
+
+function installStorageHubRedirect() {
+  if (storageHubRedirectInstalled || typeof window === "undefined") return;
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") return;
+
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, "src");
+  if (!descriptor?.get || !descriptor.set) return;
+
+  storageHubRedirectInstalled = true;
+  Object.defineProperty(HTMLIFrameElement.prototype, "src", {
+    configurable: true,
+    enumerable: descriptor.enumerable,
+    get: descriptor.get,
+    set(value: string) {
+      const nextValue = value === COFHE_STORAGE_HUB_URL
+        ? `${window.location.origin}/storage-hub.html`
+        : value;
+      descriptor.set!.call(this, nextValue);
+    },
+  });
+}
 
 // Intercept fetch to capture sealOutput response bodies
 if (typeof window !== "undefined") {
@@ -48,6 +72,7 @@ export async function getFheClient(
   if (connectPromise) return connectPromise;
 
   connectPromise = (async () => {
+    installStorageHubRedirect();
     const { createCofheClient, createCofheConfig } = await import("@cofhe/sdk/web");
     const { arbSepolia } = await import("@cofhe/sdk/chains");
     const config = createCofheConfig({
