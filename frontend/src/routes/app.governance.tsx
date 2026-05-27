@@ -12,8 +12,9 @@ export const Route = createFileRoute("/app/governance")({
 
 function GovernancePage() {
   const { isConnected } = useAccount();
-  const { selectedCircleId } = useCircle();
+  const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
+  const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
   const { loading, step, proposalCount, createProposal, submitVote, getProposal, hasVoted, cancelProposal } =
     useKuraGovernance();
 
@@ -43,7 +44,7 @@ function GovernancePage() {
 
   const handleCreate = useCallback(async () => {
     setError("");
-    if (!cId) { setError("Select a circle first"); return; }
+    if (!hasSelectedCircle) { setError("Select a circle first"); return; }
     if (!description) { setError("Enter a proposal description"); return; }
     try {
       const hash = await createProposal(cId, description, BigInt(duration), BigInt(quorum));
@@ -52,7 +53,7 @@ function GovernancePage() {
     } catch (e: any) {
       setError(e.message ?? "Unknown error");
     }
-  }, [cId, description, duration, quorum, createProposal]);
+  }, [cId, hasSelectedCircle, description, duration, quorum, createProposal]);
 
   const handleVote = useCallback(async (proposalId: bigint, vote: boolean) => {
     setError("");
@@ -105,7 +106,7 @@ function GovernancePage() {
               className="w-full rounded-lg bg-zinc-900 border border-white/10 px-3 py-2 text-sm text-white" min="1" />
           </div>
         </div>
-        <button onClick={handleCreate} disabled={loading || !cId || !description}
+        <button onClick={handleCreate} disabled={loading || !hasSelectedCircle || !description}
           className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Vote className="w-4 h-4" />}
           {loading ? step : "Create Proposal"}

@@ -12,8 +12,9 @@ export const Route = createFileRoute("/app/dispute")({
 
 function DisputePage() {
   const { isConnected } = useAccount();
-  const { selectedCircleId } = useCircle();
+  const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
+  const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
   const { loading, step, disputeCount, raiseDispute, resolveDispute, getDisputeStatus } =
     useKuraDispute();
 
@@ -26,14 +27,14 @@ function DisputePage() {
 
   const handleRaise = useCallback(async () => {
     setError("");
-    if (!cId) { setError("Select a circle first"); return; }
+    if (!hasSelectedCircle) { setError("Select a circle first"); return; }
     try {
       const hash = await raiseDispute(cId, BigInt(round), BigInt(Math.round(Number(amount) * 1e6)));
       setTxHash(hash as string);
     } catch (e: any) {
       setError(e.message ?? "Unknown error");
     }
-  }, [cId, round, amount, raiseDispute]);
+  }, [cId, hasSelectedCircle, round, amount, raiseDispute]);
 
   const handleLookup = useCallback(async () => {
     setError("");
@@ -91,7 +92,7 @@ function DisputePage() {
           </div>
         </div>
         <p className="text-xs text-zinc-500">Your claimed amount is encrypted on-chain. The admin resolves without seeing the value.</p>
-        <button onClick={handleRaise} disabled={loading || !cId}
+        <button onClick={handleRaise} disabled={loading || !hasSelectedCircle}
           className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
           {loading ? step : "Raise Dispute (Encrypted)"}

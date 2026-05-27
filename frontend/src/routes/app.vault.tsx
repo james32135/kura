@@ -12,8 +12,9 @@ export const Route = createFileRoute("/app/vault")({
 
 function VaultPage() {
   const { isConnected } = useAccount();
-  const { selectedCircleId } = useCircle();
+  const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
+  const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
   const { loading, step, memberCount, allowSelf, getEncMemberSlot } =
     useKuraMemberRegistry(cId);
 
@@ -82,7 +83,7 @@ function VaultPage() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={handleAllowSelf}
-            disabled={loading || !cId}
+            disabled={loading || !hasSelectedCircle}
             className="py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
@@ -90,7 +91,7 @@ function VaultPage() {
           </button>
           <button
             onClick={handleGetSlot}
-            disabled={loading || !cId}
+            disabled={loading || !hasSelectedCircle}
             className="py-2.5 rounded-lg border border-sky-500/40 text-sky-300 text-sm hover:bg-sky-500/10 transition disabled:opacity-40"
           >
             Get Slot Handle

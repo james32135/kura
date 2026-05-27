@@ -12,8 +12,9 @@ export const Route = createFileRoute("/app/privacy")({
 
 function PrivacyPage() {
   const { isConnected } = useAccount();
-  const { selectedCircleId } = useCircle();
+  const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
+  const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
   const { loading, step, isPrivate, hasAccess, metadataCounts, initVault, grantAccess } =
     useKuraPrivacyVault(cId);
 
@@ -97,7 +98,7 @@ function PrivacyPage() {
         </label>
         <button
           onClick={handleInit}
-          disabled={loading || !cId}
+          disabled={loading || !hasSelectedCircle}
           className="w-full py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
@@ -117,7 +118,7 @@ function PrivacyPage() {
         />
         <button
           onClick={handleGrant}
-          disabled={loading || !cId || !memberInput}
+          disabled={loading || !hasSelectedCircle || !memberInput}
           className="w-full py-2.5 rounded-lg border border-violet-500/40 text-violet-300 text-sm hover:bg-violet-500/10 transition disabled:opacity-40"
         >
           {loading ? step : "Grant Access"}

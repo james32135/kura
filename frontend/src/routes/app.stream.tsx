@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Zap, Loader2, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
 import { AppHeader, StatCard } from "@/components/app/AppPrimitives";
 import { useAccount } from "wagmi";
 import { useKuraStreamPay } from "@/hooks/useKuraStreamPay";
-import { useKuraCircle } from "@/hooks/useKuraCircle";
 import { useCircle } from "@/context/CircleContext";
-import { formatUnits } from "viem";
 
 export const Route = createFileRoute("/app/stream")({
   component: StreamPage,
@@ -14,8 +12,9 @@ export const Route = createFileRoute("/app/stream")({
 
 function StreamPage() {
   const { address, isConnected } = useAccount();
-  const { selectedCircleId } = useCircle();
+  const { selectedCircleId, myCircles } = useCircle();
   const cId = selectedCircleId;
+  const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
   const { loading, step, streamPool, myPaid, createStream, collectStream, cancelStream } =
     useKuraStreamPay(cId);
 
@@ -117,7 +116,7 @@ function StreamPage() {
         </div>
         <button
           onClick={handleCreate}
-          disabled={loading || !cId}
+          disabled={loading || !hasSelectedCircle}
           className="w-full py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition disabled:opacity-40 flex items-center justify-center gap-2"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
@@ -129,14 +128,14 @@ function StreamPage() {
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={handleCollect}
-          disabled={loading || !cId}
+          disabled={loading || !hasSelectedCircle}
           className="py-2.5 rounded-lg border border-sky-500/40 text-sky-400 text-sm hover:bg-sky-500/10 transition disabled:opacity-40"
         >
           Collect Stream
         </button>
         <button
           onClick={handleCancel}
-          disabled={loading || !cId}
+          disabled={loading || !hasSelectedCircle}
           className="py-2.5 rounded-lg border border-red-500/40 text-red-400 text-sm hover:bg-red-500/10 transition disabled:opacity-40"
         >
           Cancel &amp; Refund
