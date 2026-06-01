@@ -49,6 +49,8 @@ function BidPage() {
   const { circleInfo, userIsMember, getPoolBalance, loading: circleLoading, step: circleStep } = useKuraCircle(selectedCircleId);
 
   const info = circleInfo as readonly [string, bigint, bigint, bigint, bigint, boolean, bigint, boolean] | undefined;
+  const adminAddr = info?.[0];
+  const isAdmin = address?.toLowerCase() === adminAddr?.toLowerCase();
   const circleActive = info?.[5] ?? false;
   const currentRound = info ? Number(info[3]) : 0;
   const currentRoundBigInt = info ? info[3] : 1n;
@@ -65,6 +67,7 @@ function BidPage() {
 
   const [amount, setAmount] = useState("");
   const [poolVal, setPoolVal] = useState<string | null>(null);
+  const [poolError, setPoolError] = useState("");
 
   const STEPS = ["Encrypting your bid", "Submitting sealed bid", "Verifying on-chain", "Bid sealed!"];
 
@@ -77,11 +80,13 @@ function BidPage() {
   }, [amount, submitBid]);
 
   const handleRevealPool = useCallback(async () => {
+    setPoolError("");
     try {
       const val = await getPoolBalance();
       if (val !== undefined) setPoolVal(formatUnits(val, 6));
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Could not decrypt pool balance";
+      setPoolError(msg);
     }
   }, [getPoolBalance]);
 
@@ -137,11 +142,14 @@ function BidPage() {
           </div>
           {poolVal !== null ? (
             <p className="mt-3 font-display text-2xl tabular-nums">${poolVal}</p>
-          ) : (
-            <button onClick={handleRevealPool} disabled={circleLoading} className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
-              <Eye className="h-3.5 w-3.5" /> Reveal
+          ) : isAdmin ? (
+            <button onClick={handleRevealPool} disabled={circleLoading} className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary hover:underline disabled:opacity-50">
+              <Eye className="h-3.5 w-3.5" /> {circleLoading ? circleStep || "Decrypting..." : "Reveal"}
             </button>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">Encrypted · admin only</p>
           )}
+          {poolError && <p className="mt-2 text-xs text-red-400">{poolError}</p>}
         </div>
       </div>
 

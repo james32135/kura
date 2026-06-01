@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { usePublicClient, useWalletClient, useWriteContract, useReadContract, useAccount } from "wagmi";
 import { KURA_GOVERNANCE_ADDRESS, KURA_GOVERNANCE_ABI } from "@/config/contracts";
 import { encryptBool } from "@/lib/fhe";
-import { getGasFees } from "@/lib/utils";
+import { getGasFees, formatContractError } from "@/lib/utils";
 
 export type ProposalStatus = "Active" | "Passed" | "Failed" | "Cancelled";
 const STATUS_LABELS: ProposalStatus[] = ["Active", "Passed", "Failed", "Cancelled"];
@@ -69,6 +69,14 @@ export function useKuraGovernance() {
     setStep("Encrypting vote...");
     try {
       const encVote = await encryptBool(publicClient, walletClient, vote, setStep);
+      setStep("Simulating vote...");
+      await publicClient.simulateContract({
+        address: KURA_GOVERNANCE_ADDRESS,
+        abi: KURA_GOVERNANCE_ABI,
+        functionName: "submitVote",
+        args: [proposalId, encVote],
+        account: address,
+      });
       setStep("Submitting vote...");
       const fees = await getGasFees(publicClient);
       const hash = await writeContractAsync({
@@ -76,15 +84,17 @@ export function useKuraGovernance() {
         abi: KURA_GOVERNANCE_ABI,
         functionName: "submitVote",
         args: [proposalId, encVote],
-        gas: 1_000_000n,
+        gas: 5_000_000n,
         ...fees,
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       if (receipt.status === "reverted") {
-        throw new Error(`submitVote reverted on-chain (gasUsed: ${receipt.gasUsed})`);
+        throw new Error(`Vote failed on-chain (gasUsed: ${receipt.gasUsed})`);
       }
       setStep("Vote submitted");
       return hash;
+    } catch (err) {
+      throw new Error(formatContractError(err));
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { Vote, Loader2, CheckCircle2, XCircle, ThumbsUp, ThumbsDown } from "luci
 import { AppHeader, StatCard } from "@/components/app/AppPrimitives";
 import { useAccount } from "wagmi";
 import { useKuraGovernance, type Proposal } from "@/hooks/useKuraGovernance";
+import { useKuraCircle } from "@/hooks/useKuraCircle";
 import { useCircle } from "@/context/CircleContext";
 
 export const Route = createFileRoute("/app/governance")({
@@ -17,6 +18,8 @@ function GovernancePage() {
   const hasSelectedCircle = myCircles.some((circle) => circle.id === cId);
   const { loading, step, proposalCount, createProposal, submitVote, getProposal, hasVoted, cancelProposal } =
     useKuraGovernance();
+  const { userIsMember } = useKuraCircle(cId);
+  const isCircleMember = userIsMember === true;
 
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("86400");
@@ -132,16 +135,23 @@ function GovernancePage() {
                 {data.plainTotalVotes > 0n ? `${data.plainYesCount}/${data.plainTotalVotes} yes` : "Votes encrypted"}
               </p>
               {data.status === "Active" && !voted && (
-                <div className="flex gap-2">
-                  <button onClick={() => handleVote(id, true)} disabled={loading}
-                    className="flex-1 py-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-sm hover:bg-emerald-600/30 transition flex items-center justify-center gap-1.5">
+                <>
+                  {!isCircleMember && (
+                    <p className="text-xs text-amber-400/90">
+                      Join circle #{data.circleId.toString()} before you can vote on this proposal.
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                  <button onClick={() => handleVote(id, true)} disabled={loading || !isCircleMember}
+                    className="flex-1 py-1.5 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-sm hover:bg-emerald-600/30 transition flex items-center justify-center gap-1.5 disabled:opacity-40">
                     <ThumbsUp className="w-3.5 h-3.5" /> Yes
                   </button>
-                  <button onClick={() => handleVote(id, false)} disabled={loading}
-                    className="flex-1 py-1.5 rounded-lg bg-red-600/20 border border-red-500/30 text-red-400 text-sm hover:bg-red-600/30 transition flex items-center justify-center gap-1.5">
+                  <button onClick={() => handleVote(id, false)} disabled={loading || !isCircleMember}
+                    className="flex-1 py-1.5 rounded-lg bg-red-600/20 border border-red-500/30 text-red-400 text-sm hover:bg-red-600/30 transition flex items-center justify-center gap-1.5 disabled:opacity-40">
                     <ThumbsDown className="w-3.5 h-3.5" /> No
                   </button>
                 </div>
+                </>
               )}
               {voted && (
                 <p className="text-xs text-zinc-500 flex items-center gap-1">

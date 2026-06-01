@@ -217,22 +217,28 @@ export function useKuraCircle(circleId: bigint = 0n) {
   }, [circleId, publicClient, walletClient, address]);
 
   const getPoolBalance = useCallback(async () => {
-    if (!publicClient || !walletClient) throw new Error("Wallet not connected");
+    if (!publicClient || !walletClient || !address) throw new Error("Wallet not connected");
+    const info = circleInfo as readonly [string, bigint, bigint, bigint, bigint, boolean, bigint, boolean] | undefined;
+    const admin = info?.[0];
+    if (!admin || admin.toLowerCase() !== address.toLowerCase()) {
+      throw new Error("Only the circle admin can decrypt the pool balance");
+    }
     setLoading(true);
+    setStep("Reading encrypted pool handle...");
     try {
       const handle = await publicClient.readContract({
         address: KURA_CIRCLE_ADDRESS,
         abi: KURA_CIRCLE_ABI,
-        functionName: "getPoolBalance",
+        functionName: "getPoolBalanceHandle",
         args: [circleId],
-        account: address,
       });
+      setStep("Decrypting pool balance...");
       const value = await decryptForView(publicClient, walletClient, handle as `0x${string}`, setStep);
       return value;
     } finally {
       setLoading(false);
     }
-  }, [circleId, publicClient, walletClient, address]);
+  }, [circleId, circleInfo, publicClient, walletClient, address]);
 
   /// @notice Admin transfers encrypted pool balance to round winner.
   /// Reads the encrypted pool handle, then calls transferPool. The contract

@@ -18,3 +18,27 @@ export async function getGasFees(publicClient: PublicClient) {
     maxPriorityFeePerGas: priority < 1n ? 1n : priority,
   };
 }
+
+/** Pull a human-readable revert reason from viem/wagmi contract errors. */
+export function formatContractError(err: unknown): string {
+  if (!err || typeof err !== "object") return String(err);
+  const e = err as {
+    shortMessage?: string;
+    message?: string;
+    cause?: { shortMessage?: string; message?: string; reason?: string };
+    details?: string;
+  };
+  const reason =
+    e.cause?.reason ??
+    e.details ??
+    e.cause?.shortMessage ??
+    e.shortMessage ??
+    e.message ??
+    "Transaction failed";
+  if (reason.includes("Only admin")) return "Only the circle admin can view the encrypted pool balance.";
+  if (reason.includes("Not a member")) return "You must join this circle before voting.";
+  if (reason.includes("Already voted")) return "You have already voted on this proposal.";
+  if (reason.includes("Voting ended")) return "The voting period for this proposal has ended.";
+  if (reason.includes("Proposal not active")) return "This proposal is no longer active.";
+  return reason.split("\n")[0];
+}
