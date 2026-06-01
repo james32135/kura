@@ -24,6 +24,7 @@ import {
   HelpCircle,
   ChevronDown,
   ExternalLink,
+  Layers,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -37,6 +38,7 @@ import {
   ContributionFlowDiagram,
   EscrowFlowDiagram,
   DecryptionFlowDiagram,
+  ReineiraOSSettlementDiagram,
 } from "@/components/landing/DocsDiagrams";
 import {
   PROTOCOL,
@@ -66,6 +68,7 @@ const NAV = [
   { id: "overview", label: "Overview", icon: BookOpen },
   { id: "mission", label: "Mission", icon: Target },
   { id: "architecture", label: "Architecture", icon: Network },
+  { id: "ecosystem", label: "Ecosystem Integrations", icon: Layers },
   { id: "contracts", label: "Contract System", icon: Code2 },
   { id: "dependencies", label: "Dependency Graph", icon: GitBranch },
   { id: "fhe", label: "FHE Operations", icon: Lock },
@@ -194,6 +197,100 @@ function Docs() {
               </li>
             </ol>
             <DataFlowDiagram className="mt-8" />
+          </DocSection>
+
+          <DocSection id="ecosystem" label="Ecosystem Integrations" title="Fhenix CoFHE & ReineiraOS">
+            <h3 className="font-display text-xl font-semibold text-foreground mt-6">Fhenix CoFHE</h3>
+            <p>
+              All homomorphic computation runs through {PROTOCOL.fheLibrary}. The frontend uses{" "}
+              {PROTOCOL.fheSdk} for client-side encryption, permit-based decryption, and threshold
+              signature collection via the CoFHE storage hub proxy.
+            </p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <strong className="text-foreground">Encryption</strong> — InEuint64 / InEbool / InEaddress
+                tuples submitted on every encrypted write
+              </li>
+              <li>
+                <strong className="text-foreground">ACL</strong> — FHE.isAllowed, FHE.allowThis,
+                FHE.allowSender, FHE.allowPublic control handle access
+              </li>
+              <li>
+                <strong className="text-foreground">Threshold decryption</strong> — verifyDecryptResult
+                and verifyDecryptResultBatch require CoFHE committee signatures before plaintext reads
+              </li>
+              <li>
+                <strong className="text-foreground">FHE operations</strong> — {STATS.fheOperations}{" "}
+                deployed across {STATS.fheEnabledContracts} contracts (see FHE Operations section)
+              </li>
+            </ul>
+
+            <h3 className="font-display text-xl font-semibold text-foreground mt-10">ReineiraOS</h3>
+            <p>
+              ReineiraOS interfaces are defined inline in KURA Solidity — no ReineiraOS npm package in
+              this repo. Two pre-deployed external contracts on Arbitrum Sepolia are wired at deploy time
+              in <code className="font-mono text-xs text-primary">tasks/deploy-kura.ts</code>:
+            </p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <strong className="text-foreground">ConfidentialEscrow</strong> (
+                <code className="font-mono text-xs">{CONTRACTS.external[0].address}</code>) — holds
+                encrypted cUSDC; calls IConditionResolver on create and redeem
+              </li>
+              <li>
+                <strong className="text-foreground">cUSDC</strong> (
+                <code className="font-mono text-xs">{CONTRACTS.external[1].address}</code>) —
+                confidential payment token for contributions, bids, StreamPay, and escrow funding
+              </li>
+              <li>
+                <strong className="text-foreground">IConditionResolver</strong> — interface in{" "}
+                <code className="font-mono text-xs">KuraConditionResolver.sol</code>; implemented by
+                KuraConditionResolver (
+                <code className="font-mono text-xs">{CONTRACTS.wave13[4].address}</code>)
+              </li>
+              <li>
+                <strong className="text-foreground">KuraEscrowAdapter</strong> (
+                <code className="font-mono text-xs">{CONTRACTS.wave13[5].address}</code>) — bridge
+                calling ConfidentialEscrow.create / fund / redeem / redeemAndUnwrap
+              </li>
+            </ul>
+
+            <h4 className="font-display text-lg font-semibold text-foreground mt-8">
+              Credit-gated redemption
+            </h4>
+            <p>
+              On escrow creation, resolver data is <code className="font-mono text-xs">abi.encode(winner, minCreditScore)</code>.
+              ConfidentialEscrow calls{" "}
+              <code className="font-mono text-xs">KuraConditionResolver.onConditionSet</code>. On redeem,
+              ConfidentialEscrow calls{" "}
+              <code className="font-mono text-xs">isConditionMet</code>, which reads{" "}
+              <code className="font-mono text-xs">KuraCredit.getCreditStats</code> and maps minScore to
+              tier (5→Bronze, 15→Silver, 30→Gold, 50→Diamond).
+            </p>
+
+            <h4 className="font-display text-lg font-semibold text-foreground mt-8">
+              Confidential settlement
+            </h4>
+            <p>
+              Escrow owner and amount are encrypted at creation. Winners redeem via{" "}
+              <code className="font-mono text-xs">claimEscrow</code> (plaintext winner check),{" "}
+              <code className="font-mono text-xs">claimAndUnwrap</code> (redeem + USDC unwrap), or{" "}
+              <code className="font-mono text-xs">claimEscrowWithProof</code> (
+              FHE.eq(eaddress) + verifyDecryptResult). Admin creates via{" "}
+              <code className="font-mono text-xs">createWinnerEscrow</code> and funds via{" "}
+              <code className="font-mono text-xs">fundEscrow</code>.
+            </p>
+
+            <ReineiraOSSettlementDiagram className="mt-8" />
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              KuraBid <code className="font-mono text-xs">settleRound</code> does not call
+              KuraEscrowAdapter on-chain — escrow setup is a separate admin step. The production{" "}
+              <code className="font-mono text-xs">useAutoSettler</code> hook uses{" "}
+              <code className="font-mono text-xs">KuraCircle.transferPool</code> for round advance;
+              <code className="font-mono text-xs">useKuraEscrowAdapter</code> exposes claim paths but is
+              not yet wired to a route. No escrow unit tests exist in <code className="font-mono text-xs">test/</code>.
+            </p>
           </DocSection>
 
           <DocSection id="contracts" label="Contract System" title={`${STATS.protocolContracts} protocol contracts`}>
@@ -346,14 +443,19 @@ function Docs() {
             </p>
           </DocSection>
 
-          <DocSection id="escrow" label="Escrow System" title="Credit-gated ConfidentialEscrow">
+          <DocSection id="escrow" label="Escrow System" title="Credit-gated ConfidentialEscrow (ReineiraOS)">
             <p>
-              KuraEscrowAdapter integrates ReineiraOS ConfidentialEscrow (
-              <code className="text-xs font-mono text-primary">0xC4333F84F5034D8691CB95f068def2e3B6DC60Fa</code>
-              ). KuraConditionResolver checks encrypted credit tiers before release. Winners self-claim
-              via FHE.eq(eaddress) identity verification.
+              KuraEscrowAdapter integrates ReineiraOS ConfidentialEscrow at{" "}
+              <code className="font-mono text-xs text-primary">{CONTRACTS.external[0].address}</code>.
+              KuraConditionResolver implements ReineiraOS IConditionResolver and gates redemption on
+              KuraCredit tier. See{" "}
+              <a href="#ecosystem" className="text-primary hover:underline">
+                Ecosystem Integrations
+              </a>{" "}
+              for the full settlement diagram.
             </p>
             <EscrowFlowDiagram className="mt-6" />
+            <ReineiraOSSettlementDiagram className="mt-6" />
           </DocSection>
 
           <DocSection id="threshold" label="Threshold Decryption" title="Verified publication">

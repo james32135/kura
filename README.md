@@ -32,6 +32,7 @@ KURA is a production-deployed decentralized savings protocol where contributions
 
 - [Mission & Vision](#mission)
 - [Design Principles](#design-principles)
+- [Ecosystem Integrations](#ecosystem-integrations)
 - [Why KURA Is Not Just An FHE Demo](#why-kura-is-not-just-an-fhe-demo)
 - [Key Technical Achievements](#key-technical-achievements)
 - [Engineering Challenges Solved](#engineering-challenges-solved)
@@ -70,6 +71,77 @@ Make encrypted cooperative finance a first-class primitive: savings pools that b
 - **Credit-gated escrow** via ReineiraOS `ConfidentialEscrow` and `KuraConditionResolver`
 - **Threshold decryption** through CoFHE network signatures for bids, governance, and winner proofs
 - **Permit-based selective disclosure** so only authorized parties decrypt their handles client-side
+
+---
+
+## Ecosystem Integrations
+
+KURA integrates two external FHE ecosystems at the contract layer. Neither is vendored as an npm dependency for escrow—ReineiraOS interfaces are defined inline in KURA Solidity files and wired to pre-deployed Arbitrum Sepolia addresses from `tasks/deploy-kura.ts`.
+
+### Fhenix CoFHE
+
+| Component | Role in KURA |
+|---|---|
+| `@fhenixprotocol/cofhe-contracts v0.1.3` | On-chain FHE library — `FHE.add`, `FHE.select`, `FHE.lte`, ACL (`FHE.isAllowed`, `FHE.allowThis`, `FHE.allowSender`), threshold verify (`FHE.verifyDecryptResult`, `FHE.verifyDecryptResultBatch`) |
+| `@cofhe/sdk 0.5.1` | Client-side encryption, permit-based decryption, threshold signature collection in the frontend |
+| CoFHE threshold network | Publishes aggregates only after committee-signed decryption — winning bids, governance tallies, winner identity proofs |
+
+**Used by:** All 10 FHE-enabled KURA contracts; every encrypted write path in the frontend (`encrypt`, `decryptForTx`, `/storage-hub.html` proxy).
+
+### ReineiraOS
+
+| Component | Address | Role in KURA |
+|---|---|---|
+| **ConfidentialEscrow** | `0xC4333F84F5034D8691CB95f068def2e3B6DC60Fa` | Holds encrypted cUSDC until `IConditionResolver.isConditionMet` returns true |
+| **cUSDC** (confidential USDC) | `0x6b6e6479b8b3237933c3ab9d8be969862d4ed89f` | Confidential payment token for contributions, bids, streams, and escrow funding |
+| **IConditionResolver** | Interface in `KuraConditionResolver.sol` | Callback API: `onConditionSet`, `isConditionMet` |
+| **KuraConditionResolver** | `0xA35d76dbbe380a75777F93C6773A20f5ebAbA744` | KURA implementation — stores `(member, minScore)` per escrow; gates redemption on KuraCredit tier |
+| **KuraEscrowAdapter** | `0xaa9814c029302aA3d66C502D2210c456aC3c9aD8` | Bridge from KURA rounds to ConfidentialEscrow |
+
+**Not used:** No other ReineiraOS contracts, libraries, or npm packages appear in this repository. USDC (`0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d`) is a standard test token for wrap/unwrap only.
+
+#### Why Confidential Escrow Matters
+
+After a sealed-bid round, the pool payout can be locked in ReineiraOS `ConfidentialEscrow` instead of releasing immediately. The escrow owner and amount are encrypted (`InEaddress`, `InEuint64`). Funds stay confidential until redemption conditions pass.
+
+#### Conditional Redemption Flow
+
+```
+Admin: KuraEscrowAdapter.createWinnerEscrow(circleId, round, winner, minCreditScore, encWinner, encPoolAmount)
+  → ConfidentialEscrow.create(encOwner, encAmount, KuraConditionResolver, abi.encode(winner, minScore))
+  → KuraConditionResolver.onConditionSet(escrowId, data)
+
+Admin: KuraEscrowAdapter.fundEscrow(circleId, round, encAmount)
+  → ConfidentialEscrow.fund(escrowId, encPayment)
+
+Winner: KuraEscrowAdapter.claimEscrow / claimAndUnwrap / claimEscrowWithProof
+  → ConfidentialEscrow.redeem(escrowId)
+  → KuraConditionResolver.isConditionMet(escrowId)  // tier >= required tier from minScore
+```
+
+**Credit-gated logic:** `KuraConditionResolver.isConditionMet` reads `KuraCredit.getCreditStats(member)` and maps `minScore` to tier thresholds (5→Bronze, 15→Silver, 30→Gold, 50→Diamond). Redemption succeeds only when `tier >= requiredTier`.
+
+**Privacy-preserving settlement:** `claimEscrowWithProof` uses `FHE.eq(eaddress)` + `FHE.verifyDecryptResult(isWinner, true, sig)` so the winner can self-claim without the admin passing a plaintext winner address at claim time.
+
+#### Protocol Features That Depend on ReineiraOS
+
+| Feature | ReineiraOS dependency |
+|---|---|
+| Encrypted contributions / pool | **cUSDC** via KuraCircle, KuraBid, KuraStreamPay |
+| Credit-gated winner payout | **ConfidentialEscrow** + **KuraConditionResolver** via **KuraEscrowAdapter** |
+| Confidential settlement | Encrypted escrow owner/amount; redeem stays on ciphertext until unwrap |
+
+#### Frontend & Test Coverage
+
+| Surface | Status |
+|---|---|
+| `useKuraEscrowAdapter.ts` | Exposes `getEscrowId`, `isClaimed`, `claimEscrow`, `claimAndUnwrap` — hook defined, not yet wired to a route |
+| `useAutoSettler.ts` | Production round advance uses `KuraCircle.transferPool` (direct encrypted transfer), not `createWinnerEscrow` |
+| `createWinnerEscrow` / `fundEscrow` | Admin-only; in deployed ABI, no frontend hook |
+| Unit tests | No `KuraEscrowAdapter` or `KuraConditionResolver` test files in `test/` |
+| Wave 5 live txs | 7 confirmed workflows; none are escrow create/fund/claim transactions |
+
+KuraBid `settleRound` and escrow creation are **separate admin steps** — there is no on-chain call from KuraBid to KuraEscrowAdapter.
 
 ---
 
@@ -546,15 +618,19 @@ Proposal IDs start at `1` (Wave 5 frontend fix).
 
 ### Escrow Model
 
-Post-auction pool payouts flow through ReineiraOS confidential escrow:
+Post-auction pool payouts can flow through ReineiraOS confidential escrow (deployed and integrated at contract level):
 
 ```
-KuraBid.settleRound → KuraEscrowAdapter.createWinnerEscrow → ConfidentialEscrow.create
-  → KuraConditionResolver.onConditionSet(member, minScore)
-  → fundEscrow(encAmount) → winner redeem when isConditionMet
+KuraBid.settleRound (separate admin tx)
+  → KuraEscrowAdapter.createWinnerEscrow → ConfidentialEscrow.create
+  → KuraConditionResolver.onConditionSet(escrowId, member, minScore)
+  → KuraEscrowAdapter.fundEscrow(encAmount)
+  → winner claimEscrow / claimEscrowWithProof when isConditionMet
 ```
 
-Winner self-claim path: `claimEscrowWithProof` uses `FHE.eq(eaddress)` + `verifyDecryptResult(true, sig)` so admin never needs to know winner off-chain.
+The production frontend auto-settler (`useAutoSettler`) currently advances rounds via `KuraCircle.transferPool` — a direct encrypted cUSDC transfer to the winner. The ReineiraOS escrow path is available on-chain for credit-gated confidential settlement but is not yet orchestrated in that hook.
+
+Winner self-claim path: `claimEscrowWithProof` uses `FHE.eq(eaddress)` + `verifyDecryptResult(true, sig)` so admin never needs to pass winner at claim time.
 
 ### StreamPay Model
 
@@ -1067,7 +1143,7 @@ Testing guide also references `/app/registry` for membership checks.
 | `useMyCircles.ts` | KuraCircle | `myCircles`, `selectedCircleId`, `isAdmin` |
 | `useKuraCircle.ts` | KuraCircle | `createCircle`, `joinCircle`, `getCircleInfo` |
 | `useKuraBid.ts` | KuraBid | `placeBid`, `getBidHandle`, `settleRound` |
-| `useKuraEscrowAdapter.ts` | KuraEscrowAdapter | `claimEscrow`, `checkWinner` |
+| `useKuraEscrowAdapter.ts` | KuraEscrowAdapter | `getEscrowId`, `isClaimed`, `claimEscrow`, `claimAndUnwrap` (hook defined; not imported by routes) |
 | `useKuraCredit.ts` | KuraCredit | Wave 1 credit queries |
 | `useAutoSettler.ts` | KuraBid | Automated round settlement |
 

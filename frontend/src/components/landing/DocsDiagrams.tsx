@@ -220,10 +220,11 @@ export function ContributionFlowDiagram({ className }: DiagramProps) {
 
 export function EscrowFlowDiagram({ className }: DiagramProps) {
   const steps = [
-    "KuraConditionResolver checks encrypted credit tier",
-    "KuraEscrowAdapter creates ConfidentialEscrow deal",
-    "Winner self-claims via FHE.eq(eaddress)",
-    "verifyDecryptResult on settlement amount",
+    "Admin: settleRound on KuraBid (separate tx)",
+    "Admin: createWinnerEscrow → ConfidentialEscrow.create",
+    "ConfidentialEscrow → KuraConditionResolver.onConditionSet",
+    "Admin: fundEscrow → ConfidentialEscrow.fund(encPayment)",
+    "Winner: claimEscrow → isConditionMet → redeem",
   ];
   return (
     <DiagramFrame title="Escrow Flow" className={className}>
@@ -241,6 +242,76 @@ export function EscrowFlowDiagram({ className }: DiagramProps) {
           </motion.li>
         ))}
       </ol>
+    </DiagramFrame>
+  );
+}
+
+export function ReineiraOSSettlementDiagram({ className }: DiagramProps) {
+  const nodes = [
+    { label: "Admin / Winner", x: 60 },
+    { label: "KuraBid", x: 160 },
+    { label: "KuraEscrowAdapter", x: 300 },
+    { label: "ConfidentialEscrow", x: 460 },
+    { label: "KuraConditionResolver", x: 620 },
+    { label: "Redeem", x: 760 },
+  ];
+  return (
+    <DiagramFrame title="ReineiraOS Settlement Path" className={className}>
+      <svg viewBox="0 0 820 120" className="w-full h-auto">
+        {nodes.slice(0, -1).map((n, i) => {
+          const next = nodes[i + 1];
+          return (
+            <motion.line
+              key={`${n.label}-line`}
+              x1={n.x + 50}
+              y1={50}
+              x2={next.x - 10}
+              y2={50}
+              stroke="oklch(0.78 0.13 200 / 0.45)"
+              strokeWidth={1.2}
+              markerEnd="url(#arrow)"
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+            />
+          );
+        })}
+        <defs>
+          <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="oklch(0.78 0.13 200 / 0.6)" />
+          </marker>
+        </defs>
+        {nodes.map((n, i) => (
+          <g key={n.label}>
+            <motion.rect
+              x={n.x - 45}
+              y={30}
+              width={90}
+              height={40}
+              rx={6}
+              fill="oklch(0.16 0.02 220)"
+              stroke={n.label === "ConfidentialEscrow" ? "oklch(0.78 0.14 65 / 0.6)" : "oklch(0.78 0.13 200 / 0.45)"}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.05 }}
+            />
+            <text
+              x={n.x}
+              y={54}
+              textAnchor="middle"
+              style={{ fontSize: 8, fill: "oklch(0.96 0.005 220 / 0.85)", fontFamily: "JetBrains Mono" }}
+            >
+              {n.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <p className="mt-3 text-xs text-muted-foreground">
+        KuraBid settlement and escrow creation are separate admin transactions. Production auto-settler
+        currently uses KuraCircle.transferPool; this path is the on-chain ReineiraOS integration.
+      </p>
     </DiagramFrame>
   );
 }
