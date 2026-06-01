@@ -3,7 +3,7 @@ import { Reveal } from "./Reveal";
 
 /**
  * Animated SVG diagram showing the KURA FHE pipeline:
- * Members → Encrypt (lock) → Pool (FHE.add) → Sealed Bid (FHE.min) → Credit (FHE.gte)
+ * Members → Encrypt (lock) → Pool (FHE.add) → Sealed Bid (FHE.lte + FHE.select) → Credit (FHE.gte)
  * Pure SVG with stroke-dash + radial pulse animations.
  */
 export function FHEFlowDiagram() {
@@ -41,7 +41,7 @@ export function FHEFlowDiagram() {
         <div className="mt-10 grid sm:grid-cols-3 gap-3">
           {[
             { c: "FHE.add()", t: "Sums encrypted contributions into the pool ciphertext." },
-            { c: "FHE.min()", t: "Picks the lowest sealed bid without ever decrypting losers." },
+            { c: "FHE.lte() + FHE.select()", t: "Compares sealed bids homomorphically — lowest bidder tracked without decrypting losers." },
             { c: "FHE.gte()", t: "Compares encrypted credit to a threshold — pass / fail only." },
           ].map((x, i) => (
             <Reveal key={x.c} delay={0.25 + i * 0.06}>
@@ -65,7 +65,7 @@ function FlowSvg() {
     { id: "m3", x: 60, y: 320, label: "Member C" },
     { id: "enc", x: 280, y: 200, label: "Encrypt" },
     { id: "pool", x: 500, y: 200, label: "FHE.add" },
-    { id: "bid", x: 720, y: 200, label: "FHE.min" },
+    { id: "bid", x: 720, y: 200, label: "FHE.lte" },
     { id: "credit", x: 940, y: 200, label: "FHE.gte" },
   ] as const;
 
@@ -238,7 +238,7 @@ function FlowSvg() {
           { x: 620, y: 70, t: "0x71b5..ff8" },
           { x: 860, y: 70, t: "0xc04e..a3d" },
           { x: 380, y: 340, t: "FHE.add(c1,c2,c3)" },
-          { x: 620, y: 340, t: "FHE.min(b1..bn)" },
+          { x: 620, y: 340, t: "FHE.lte + select" },
           { x: 860, y: 340, t: "FHE.gte(s,T)" },
         ].map((f, i) => (
           <motion.text
